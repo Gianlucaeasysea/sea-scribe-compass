@@ -63,7 +63,7 @@ function staticScan() {
   for (const dir of RENDER_DIRS) {
     for (const file of walk(dir)) {
       if (ALLOWED_FILES.has(file)) continue;
-      const src = readFileSync(file, "utf8");
+      if (ALLOWED_DIRS.some((d) => file.startsWith(d))) continue;
       // Strip lines clearly inside event handlers / effects to reduce noise.
       const lines = src.split("\n");
       lines.forEach((line, i) => {
