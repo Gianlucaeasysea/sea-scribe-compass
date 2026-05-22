@@ -130,10 +130,10 @@ function FleetMap() {
                 onClick={() => setTier(tier === t ? null : (t as Tier))}
                 style={{ width: `${pct}%`, background: color, opacity: tier === null || tier === t ? 0.9 : 0.25 }}
                 className="relative group transition-opacity hover:opacity-100"
-                title={`${t} · ${s.count} customers · ${formatEuro(s.revenue)}`}
+                title={`${tierIT(t)} · ${s.count} clienti · ${formatEuro(s.revenue)}`}
               >
                 <span className="absolute inset-0 grid place-items-center text-[11px] font-mono text-white/90 px-1 truncate">
-                  {pct >= 5 ? `${t} ${pct.toFixed(0)}%` : ""}
+                  {pct >= 5 ? `${tierIT(t)} ${pct.toFixed(0)}%` : ""}
                 </span>
               </button>
             );
