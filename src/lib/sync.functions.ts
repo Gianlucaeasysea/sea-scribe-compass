@@ -689,4 +689,18 @@ export const syncZendesk = createServerFn({ method: "POST" })
     }
   });
 
+// ---------- Google Sheet Boats ----------
+export const syncGsheetBoats = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async () => {
+    const supabase = createClient(
+      process.env.SUPABASE_URL!,
+      process.env.SUPABASE_PUBLISHABLE_KEY!,
+    );
+    const { data, error } = await supabase.functions.invoke("gsheet-boats-sync");
+    if (error) throw new Error(error.message);
+    return data;
+  });
+
+
 
