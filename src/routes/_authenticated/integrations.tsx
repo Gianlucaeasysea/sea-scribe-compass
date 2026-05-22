@@ -30,13 +30,14 @@ export const Route = createFileRoute("/_authenticated/integrations")({
   component: Integrations,
 });
 
-type IntegrationId = "shopify" | "klaviyo" | "facebook" | "circle";
+type IntegrationId = "shopify" | "klaviyo" | "facebook" | "circle" | "zendesk";
 
 const META: Record<IntegrationId, { color: string; desc: string }> = {
   shopify: { color: "#96BF48", desc: "Orders, products, customers" },
   klaviyo: { color: "#FF6B35", desc: "Email opens, clicks, flows" },
   facebook: { color: "#1877F2", desc: "Ad spend, audiences, conversions" },
   circle: { color: "#9333EA", desc: "Community posts & engagement" },
+  zendesk: { color: "#03363D", desc: "Support tickets & satisfaction" },
 };
 
 type FieldDef = { key: string; label: string; placeholder?: string; type?: string; defaultValue?: string };
