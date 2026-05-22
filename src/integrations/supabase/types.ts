@@ -488,6 +488,62 @@ export type Database = {
         }
         Relationships: []
       }
+      zendesk_tickets: {
+        Row: {
+          created_at: string | null
+          customer_id: string | null
+          description: string | null
+          id: string
+          priority: string | null
+          requester_email: string | null
+          satisfaction_rating: string | null
+          solved_at: string | null
+          status: string | null
+          subject: string | null
+          tags: string[] | null
+          updated_at: string | null
+          zendesk_ticket_id: number
+        }
+        Insert: {
+          created_at?: string | null
+          customer_id?: string | null
+          description?: string | null
+          id?: string
+          priority?: string | null
+          requester_email?: string | null
+          satisfaction_rating?: string | null
+          solved_at?: string | null
+          status?: string | null
+          subject?: string | null
+          tags?: string[] | null
+          updated_at?: string | null
+          zendesk_ticket_id: number
+        }
+        Update: {
+          created_at?: string | null
+          customer_id?: string | null
+          description?: string | null
+          id?: string
+          priority?: string | null
+          requester_email?: string | null
+          satisfaction_rating?: string | null
+          solved_at?: string | null
+          status?: string | null
+          subject?: string | null
+          tags?: string[] | null
+          updated_at?: string | null
+          zendesk_ticket_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "zendesk_tickets_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
