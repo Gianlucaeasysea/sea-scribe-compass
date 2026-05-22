@@ -26,7 +26,7 @@ function Fleet() {
   const [q, setQ] = useState("");
   const [tierFilter, setTierFilter] = useState<string | null>(null);
   const [tagFilter, setTagFilter] = useState<string | null>(null);
-  const [communityFilter, setCommunityFilter] = useState<"all" | "in" | "out">("all");
+  const [communityFilter, setCommunityFilter] = useState<"all" | "in" | "out" | "both" | "circle_only">("all");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [newTag, setNewTag] = useState("");
   const [page, setPage] = useState(1);
@@ -38,6 +38,7 @@ function Fleet() {
   }, [data]);
 
   const inCommunity = (c: any) => !!c.circle_id || (c.tags ?? []).includes("circle-member");
+  const isShopify = (c: any) => !!c.shopify_id;
 
   const rows = useMemo(() => {
     const list = data ?? [];
@@ -47,6 +48,8 @@ function Fleet() {
       if (tagFilter && !(c.tags ?? []).includes(tagFilter)) return false;
       if (communityFilter === "in" && !inCommunity(c)) return false;
       if (communityFilter === "out" && inCommunity(c)) return false;
+      if (communityFilter === "both" && !(inCommunity(c) && isShopify(c))) return false;
+      if (communityFilter === "circle_only" && !(inCommunity(c) && !isShopify(c))) return false;
       if (!Q) return true;
       return (
         c.name?.toLowerCase().includes(Q) ||
@@ -141,6 +144,8 @@ function Fleet() {
           <MessageCircle className="size-3.5 text-muted-foreground" />
           <Chip label="All" active={communityFilter === "all"} onClick={() => { setCommunityFilter("all"); setPage(1); }} />
           <Chip label="In Circle community" active={communityFilter === "in"} onClick={() => { setCommunityFilter("in"); setPage(1); }} />
+          <Chip label="Circle + Shopify" active={communityFilter === "both"} onClick={() => { setCommunityFilter("both"); setPage(1); }} />
+          <Chip label="Circle only (no Shopify)" active={communityFilter === "circle_only"} onClick={() => { setCommunityFilter("circle_only"); setPage(1); }} />
           <Chip label="Not in community" active={communityFilter === "out"} onClick={() => { setCommunityFilter("out"); setPage(1); }} />
         </div>
         {allTags.length > 0 && (
@@ -174,11 +179,16 @@ function Fleet() {
               <tr key={c.id} className="border-t border-border hover:bg-surface-2/40 transition align-top">
                 <td className="p-3">
                   <Link to="/customer/$id" params={{ id: c.id }} className="hover:text-primary">
-                    <p className="font-medium flex items-center gap-1.5">
+                    <p className="font-medium flex items-center gap-1.5 flex-wrap">
                       {c.name}
                       {inCommunity(c) && (
                         <span title="In Circle community" className="inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded bg-purple-500/15 text-purple-300 border border-purple-500/40">
                           <MessageCircle className="size-2.5" /> Circle
+                        </span>
+                      )}
+                      {inCommunity(c) && isShopify(c) && (
+                        <span title="Matched on Shopify + Circle" className="inline-flex items-center text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-300 border border-emerald-500/40">
+                          ✓ Shopify
                         </span>
                       )}
                     </p>
