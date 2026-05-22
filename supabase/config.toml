@@ -1,1 +1,10 @@
 project_id = "vtggdvbaguhvvlwippuq"
+
+[functions.analyze-customer]
+verify_jwt = false
+
+[functions.analyze-segment]
+verify_jwt = false
+
+[functions.generate-actions]
+verify_jwt = false

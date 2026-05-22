@@ -10,6 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { formatEuro } from "@/lib/format";
+import { ClaudeActionsFeed } from "@/components/ai/claude-actions-feed";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   component: Dashboard,
@@ -119,6 +120,23 @@ function Dashboard() {
           </Link>
         </div>
       </div>
+
+      {data && data.kpi.totalCustomers > 0 && (
+        <ClaudeActionsFeed
+          cacheKey={`dashboard:${data.kpi.totalCustomers}:${data.kpi.atRisk}:${data.kpi.champion}`}
+          snapshot={{
+            season: new Date().toLocaleString("en-US", { month: "long" }),
+            total_customers: data.kpi.totalCustomers,
+            avg_ltv: data.kpi.avgLtv,
+            champions: data.kpi.champion,
+            at_risk: data.kpi.atRisk,
+            opportunity_eur: data.kpi.opportunity,
+            pending_actions: data.kpi.pendingActions,
+            tier_counts: data.tierCounts,
+            top_products: (data.topRecs ?? []).slice(0, 6).map((r: any) => r.product_name),
+          }}
+        />
+      )}
 
       <div className="glow-card p-6">
         <div className="flex items-center justify-between mb-4">
