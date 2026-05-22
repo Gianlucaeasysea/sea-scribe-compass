@@ -1,5 +1,6 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import type { FormEvent } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,7 +29,7 @@ function LoginPage() {
     return () => sub.subscription.unsubscribe();
   }, [navigate]);
 
-  const handleEmail = async (e: React.FormEvent) => {
+  const handleEmail = async (e: FormEvent) => {
     e.preventDefault();
     setBusy(true);
     try {
