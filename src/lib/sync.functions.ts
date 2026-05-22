@@ -35,7 +35,9 @@ function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-async function shopifyFetch(path: string): Promise<{ json: any; link: string | null } | null> {
+type ShopifyResult = { json: any; link: string | null; status: number };
+
+async function shopifyFetch(path: string): Promise<ShopifyResult> {
   const token = process.env.SHOPIFY_CUSTOM_ADMIN_TOKEN || process.env.SHOPIFY_ACCESS_TOKEN;
   if (!token) throw new Error("SHOPIFY_CUSTOM_ADMIN_TOKEN or SHOPIFY_ACCESS_TOKEN not configured");
   let res: Response | null = null;
@@ -49,13 +51,12 @@ async function shopifyFetch(path: string): Promise<{ json: any; link: string | n
   }
   if (!res) throw new Error(`Shopify ${path}: no response`);
   if (res.status === 401 || res.status === 403) {
-    console.warn(`Shopify ${path}: ${res.status} (missing scope) — skipping`);
-    return null;
+    return { json: null, link: null, status: res.status };
   }
   if (!res.ok) {
     throw new Error(`Shopify ${path}: ${res.status} ${await res.text()}`);
   }
-  return { json: await res.json(), link: res.headers.get("link") };
+  return { json: await res.json(), link: res.headers.get("link"), status: res.status };
 }
 
 function getNextShopifyPath(linkHeader: string | null) {
@@ -66,16 +67,16 @@ function getNextShopifyPath(linkHeader: string | null) {
   return `${url.pathname.split("/admin/api/2025-07/")[1]}${url.search}`;
 }
 
-async function fetchAllShopifyRecords<T>(initialPath: string, key: string): Promise<{ records: T[]; blocked: boolean }> {
+async function fetchAllShopifyRecords<T>(initialPath: string, key: string): Promise<{ records: T[]; blockedStatus: number | null }> {
   const records: T[] = [];
   let nextPath: string | null = initialPath;
   while (nextPath) {
     const result = await shopifyFetch(nextPath);
-    if (!result) return { records, blocked: true };
+    if (result.json === null) return { records, blockedStatus: result.status };
     records.push(...((result.json[key] ?? []) as T[]));
     nextPath = getNextShopifyPath(result.link);
   }
-  return { records, blocked: false };
+  return { records, blockedStatus: null };
 }
 
 async function upsertInBatches(table: "customers" | "orders", rows: any[], onConflict: string, size = 500) {
@@ -93,15 +94,32 @@ export const syncShopify = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async () => {
     try {
+      // 1. Verifica connessione: shop.json richiede solo accesso base.
+      const shopProbe = await shopifyFetch("shop.json");
+      if (shopProbe.status === 401) {
+        const msg = "Token Shopify non valido o scaduto (401). Controlla SHOPIFY_CUSTOM_ADMIN_TOKEN.";
+        await markStatus("shopify", "Shopify", false, 0, msg);
+        return { ok: false, message: msg };
+      }
+      if (shopProbe.status === 403 || shopProbe.json === null) {
+        const msg = "Permessi insufficienti per leggere lo shop (403). Il token non ha gli scope necessari.";
+        await markStatus("shopify", "Shopify", false, 0, msg);
+        return { ok: false, message: msg };
+      }
+
+      // 2. Conteggio prodotti (read_products è di solito concesso).
+      const productsProbe = await shopifyFetch("products/count.json");
+      const productCount: number | null = productsProbe.json?.count ?? null;
+
+      // 3. Clienti e ordini — se bloccati da scope, non far fallire tutto.
       const customersResult = await fetchAllShopifyRecords<any>("customers.json?limit=250", "customers");
       let customers = customersResult.records;
-      const customersBlocked = customersResult.blocked;
+      const customersBlocked = customersResult.blockedStatus !== null;
 
       const ordersResult = await fetchAllShopifyRecords<any>("orders.json?status=any&limit=250", "orders");
       const orders = ordersResult.records;
-      const ordersBlocked = ordersResult.blocked;
+      const ordersBlocked = ordersResult.blockedStatus !== null;
 
-      // Fallback: derive customers from orders when customers API is blocked
       if (customersBlocked && orders.length) {
         const seen = new Map<string, any>();
         for (const o of orders) {
@@ -157,13 +175,20 @@ export const syncShopify = createServerFn({ method: "POST" })
         await upsertInBatches("orders", orderRows, "shopify_order_id");
       }
 
+      const parts: string[] = [];
+      if (productCount !== null) parts.push(`${productCount} prodotti`);
+      parts.push(`${customerRows.length} clienti`);
+      parts.push(`${orderRows.length} ordini`);
       const warnings: string[] = [];
-      if (customersBlocked) warnings.push("scope read_customers non approvato");
-      if (ordersBlocked) warnings.push("scope read_orders non approvato");
-      const base = `${customerRows.length} customers · ${orderRows.length} orders`;
-      const msg = warnings.length ? `${base} — ${warnings.join("; ")} (richiedi 'Protected customer data' nell'app Shopify)` : base;
-      const connected = !(customersBlocked && ordersBlocked);
-      await markStatus("shopify", "Shopify", connected, customerRows.length + orderRows.length, msg);
+      if (customersBlocked) warnings.push("clienti bloccati (manca scope read_customers)");
+      if (ordersBlocked) warnings.push("ordini bloccati (manca scope read_orders)");
+      const hint = warnings.length
+        ? ` — ${warnings.join("; ")}. Abilita 'Protected customer data' nell'app Shopify per importarli.`
+        : "";
+      const msg = `${parts.join(" · ")}${hint}`;
+
+      // Connesso: shop.json risponde. I dati limitati non rendono "rotta" l'integrazione.
+      await markStatus("shopify", "Shopify", true, customerRows.length + orderRows.length, msg);
       return { ok: true, message: msg };
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Unknown error";
