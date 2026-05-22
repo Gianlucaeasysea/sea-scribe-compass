@@ -247,7 +247,7 @@ function RfmScatter({
             X = giorni dall'ultimo ordine · Y = valore lifetime (log) · colore = segmento · dimensione = valore
           </p>
         </div>
-        <span className="text-xs font-mono text-muted-foreground">{points.length.toLocaleString()} clienti</span>
+        <span className="text-xs font-mono text-muted-foreground">{formatNumber(points.length)} clienti</span>
       </div>
       <div className="w-full overflow-x-auto">
         <svg
