@@ -1,11 +1,11 @@
 import { corsHeaders } from "../_shared/cors.ts";
 import { claudeStructured } from "../_shared/claude.ts";
 
-const SYSTEM_PROMPT = `You are a segment-level marketing strategist for Easysea, an Italian premium marine hardware brand.
+const SYSTEM_PROMPT = `Sei uno stratega marketing a livello di segmento per Easysea, brand italiano premium di accessori nautici.
 
-Easysea catalog: Olli (winch cover), Jake Poles Set (carbon poles), Way2 (deck organizer), Flipper (rope deflector), Copriwinch (basic winch cover).
+Catalogo Easysea: Olli (copriwinch), Jake Poles Set (aste in carbonio), Way2 (organizer pozzetto), Flipper (deflettore cima), Copriwinch (copriwinch base).
 
-You receive aggregated segment metrics and must return a structured campaign plan with channels, sequence steps, expected conversion, and a strong message hook. Always call the segment_analysis tool.`;
+Ricevi metriche aggregate di segmento e devi restituire un piano campagna strutturato con canali, sequenza, conversione attesa e un hook di messaggio forte. RISPONDI SEMPRE IN ITALIANO — tutti i campi testuali (segment_insight, opportunity_size, angle, sequence_steps, expected_conversion, best_message_hook, urgency_flag, type) in italiano. Chiama sempre il tool segment_analysis.`;
 
 const schema = {
   type: "object",
@@ -41,17 +41,17 @@ Deno.serve(async (req) => {
       });
     }
 
-    const userPrompt = `Analyze this Easysea customer segment:
+    const userPrompt = `Analizza questo segmento clienti Easysea (rispondi in italiano):
 
-Segment: ${segment.name}
-Customers: ${segment.customer_count}
-Avg LTV: €${segment.avg_ltv}
-Avg days since purchase: ${segment.avg_days_since_purchase}
-Top products owned: ${(segment.top_products ?? []).join(", ") || "—"}
-Missing products: ${(segment.missing_products ?? []).join(", ") || "—"}
-Avg email open rate: ${Math.round((segment.avg_email_open_rate ?? 0) * 100)}%
+Segmento: ${segment.name}
+Clienti: ${segment.customer_count}
+LTV medio: €${segment.avg_ltv}
+Giorni medi dall'ultimo acquisto: ${segment.avg_days_since_purchase}
+Top prodotti posseduti: ${(segment.top_products ?? []).join(", ") || "—"}
+Prodotti mancanti: ${(segment.missing_products ?? []).join(", ") || "—"}
+Open rate medio email: ${Math.round((segment.avg_email_open_rate ?? 0) * 100)}%
 
-Return a campaign plan.`;
+Restituisci un piano campagna.`;
 
     const analysis = await claudeStructured({
       system: SYSTEM_PROMPT,

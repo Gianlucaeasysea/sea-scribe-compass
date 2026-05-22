@@ -59,21 +59,21 @@ export function ClaudeActionsFeed({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Brain className="size-4 text-primary animate-pulse" />
-          <h3 className="font-semibold">Today's actions</h3>
+          <h3 className="font-semibold">Azioni di oggi</h3>
           <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-primary/15 text-primary border border-primary/30">
             Claude AI
           </span>
         </div>
         <Button size="sm" variant="ghost" onClick={refresh} disabled={isFetching}>
           <RefreshCw className={`size-3 mr-1 ${isFetching ? "animate-spin" : ""}`} />
-          Refresh
+          Aggiorna
         </Button>
       </div>
 
       {isFetching && !data && (
         <div className="py-8 text-center space-y-2">
           <Sparkles className="size-6 text-primary mx-auto animate-pulse" />
-          <p className="text-xs text-muted-foreground">Charting today's course…</p>
+          <p className="text-xs text-muted-foreground">Sto tracciando la rotta di oggi…</p>
         </div>
       )}
 
@@ -103,7 +103,7 @@ export function ClaudeActionsFeed({
                   {a.segment}
                 </span>
                 <span className={`px-1.5 py-0.5 rounded border ${EFFORT_COLOR[a.effort]}`}>
-                  {a.effort} effort
+                  effort {a.effort === "low" ? "basso" : a.effort === "medium" ? "medio" : "alto"}
                 </span>
                 <span className="px-1.5 py-0.5 rounded border border-emerald-500/40 bg-emerald-500/10 text-emerald-300">
                   {a.expected_revenue}

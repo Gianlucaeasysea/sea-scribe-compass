@@ -1,22 +1,22 @@
 import { corsHeaders } from "../_shared/cors.ts";
 import { claudeStructured } from "../_shared/claude.ts";
 
-const SYSTEM_PROMPT = `You are a marine hardware marketing intelligence expert for Easysea, an Italian brand selling premium nautical products to recreational boat owners (diportisti).
+const SYSTEM_PROMPT = `Sei un esperto di marketing intelligence per accessori nautici per Easysea, brand italiano premium di prodotti nautici per diportisti.
 
-Easysea product catalog:
-- Olli: premium winch cover for sailboats (protects winches from UV/salt)
-- Jake Poles Set: carbon fiber boat poles with rope management system
-- Way2: deck organizer / line organizer for cockpit
-- Flipper: innovative rope deflector / fairlead system
-- Copriwinch: basic winch cover entry level
+Catalogo prodotti Easysea:
+- Olli: copriwinch premium per barche a vela (protegge dai raggi UV e dalla salsedine)
+- Jake Poles Set: aste in fibra di carbonio con sistema di gestione cime
+- Way2: organizer da pozzetto / line organizer
+- Flipper: deflettore cima / passacavo innovativo
+- Copriwinch: copriwinch base entry level
 
-Your role: analyze customer purchase history and engagement data, then provide:
-1. A concise behavioral profile (what type of sailor they likely are, what their boat setup suggests)
-2. The 3 best next product recommendations with specific reasoning tied to what they already bought
-3. The ideal marketing approach (channel, message angle, timing)
-4. A churn risk assessment if applicable
+Il tuo ruolo: analizzare lo storico acquisti e i dati di engagement del cliente, poi fornire:
+1. Un profilo comportamentale conciso (che tipo di velista è probabilmente, cosa suggerisce il setup della sua barca)
+2. Le 3 migliori raccomandazioni prodotto successive con motivazioni specifiche legate a ciò che ha già acquistato
+3. L'approccio marketing ideale (canale, angolo del messaggio, timing)
+4. Una valutazione del rischio di abbandono se applicabile
 
-Always respond by calling the customer_analysis tool with the structured payload.`;
+RISPONDI SEMPRE IN ITALIANO. Tutti i campi testuali devono essere in italiano (profile_summary, inferred_boat_setup, reason, message_angle, churn_reason, suggested_subject_line, best_channel, best_timing). Mantieni invariati solo i valori enum tecnici (low/medium/high, immediate/this_week/this_month). Rispondi chiamando il tool customer_analysis con il payload strutturato.`;
 
 const schema = {
   type: "object",
@@ -68,17 +68,17 @@ Deno.serve(async (req) => {
     }
 
     const orders = Array.isArray(customer.orders) ? customer.orders : [];
-    const userPrompt = `Analyze this Easysea customer and provide marketing recommendations:
+    const userPrompt = `Analizza questo cliente Easysea e fornisci raccomandazioni marketing (in italiano):
 
-Customer: ${customer.name} (${customer.country ?? "unknown"})
+Cliente: ${customer.name} (${customer.country ?? "sconosciuto"})
 Lifetime Value: €${customer.lifetime_value ?? 0}
-Boat type: ${customer.boat_type || "unknown"}
-Days since last purchase: ${customer.last_purchase_days_ago ?? "unknown"}
-Email engagement: ${Math.round((customer.email_open_rate ?? 0) * 100)}% open rate
-Community activity score: ${customer.circle_activity_score ?? 0}/10
+Tipo barca: ${customer.boat_type || "sconosciuto"}
+Giorni dall'ultimo acquisto: ${customer.last_purchase_days_ago ?? "sconosciuto"}
+Engagement email: ${Math.round((customer.email_open_rate ?? 0) * 100)}% open rate
+Attività community: ${customer.circle_activity_score ?? 0}/10
 
-Purchase history:
-${orders.map((o: { product: string; price: number; date: string }) => `- ${o.product} — €${o.price} (${o.date})`).join("\n") || "(no orders)"}`;
+Storico acquisti:
+${orders.map((o: { product: string; price: number; date: string }) => `- ${o.product} — €${o.price} (${o.date})`).join("\n") || "(nessun ordine)"}`;
 
     const analysis = await claudeStructured({
       system: SYSTEM_PROMPT,
