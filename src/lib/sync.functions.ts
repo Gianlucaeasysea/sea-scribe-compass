@@ -320,10 +320,10 @@ export const syncKlaviyo = createServerFn({ method: "POST" })
       }
 
       const metricById = new Map(
-        included.filter((i) => i.type === "metric").map((m) => [m.id, m.attributes?.name ?? ""]),
+        allIncluded.filter((i: any) => i.type === "metric").map((m: any) => [m.id, m.attributes?.name ?? ""]),
       );
       const profileById = new Map(
-        included.filter((i) => i.type === "profile").map((p) => [p.id, p.attributes?.email ?? null]),
+        allIncluded.filter((i: any) => i.type === "profile").map((p: any) => [p.id, p.attributes?.email ?? null]),
       );
 
       // Match profiles to existing customers by email
@@ -333,8 +333,8 @@ export const syncKlaviyo = createServerFn({ method: "POST" })
         : { data: [] as { id: string; email: string }[] };
       const custByEmail = new Map((existing ?? []).map((c) => [c.email, c.id]));
 
-      const rows = events
-        .map((ev) => {
+      const rows = allEvents
+        .map((ev: any) => {
           const metricId = ev.relationships?.metric?.data?.id;
           const profileId = ev.relationships?.profile?.data?.id;
           const metricName = metricById.get(metricId) ?? "Unknown";
@@ -359,7 +359,7 @@ export const syncKlaviyo = createServerFn({ method: "POST" })
         .filter(Boolean) as any[];
 
       if (rows.length) await supabaseAdmin.from("email_events").insert(rows);
-      const msg = `${rows.length} events synced (${events.length} fetched)`;
+      const msg = `${rows.length} events synced (${allEvents.length} fetched)`;
       await markStatus("klaviyo", "Klaviyo", true, rows.length, msg);
       return { ok: true, message: msg };
     } catch (e) {
