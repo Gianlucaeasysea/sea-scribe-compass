@@ -90,7 +90,7 @@ function FleetMap() {
           {TIERS.map((t) => (
             <Chip
               key={t}
-              label={`${tierIT(t)} · ${(tierStats[t]?.count ?? 0).toLocaleString()}`}
+              label={`${tierIT(t)} · ${formatNumber(tierStats[t]?.count ?? 0)}`}
               active={tier === t}
               color={TIER_COLOR[t]}
               onClick={() => setTier(tier === t ? null : t)}
