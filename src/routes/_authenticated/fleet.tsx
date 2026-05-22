@@ -99,6 +99,12 @@ function Fleet() {
             <Chip key={t} label={t} active={tierFilter === t} onClick={() => setTierFilter(t)} />
           ))}
         </div>
+        <div className="flex flex-wrap gap-2 items-center">
+          <MessageCircle className="size-3.5 text-muted-foreground" />
+          <Chip label="All" active={communityFilter === "all"} onClick={() => setCommunityFilter("all")} />
+          <Chip label="In Circle community" active={communityFilter === "in"} onClick={() => setCommunityFilter("in")} />
+          <Chip label="Not in community" active={communityFilter === "out"} onClick={() => setCommunityFilter("out")} />
+        </div>
         {allTags.length > 0 && (
           <div className="flex flex-wrap gap-2 items-center">
             <Tag className="size-3.5 text-muted-foreground" />
@@ -110,6 +116,7 @@ function Fleet() {
         )}
         <p className="text-xs text-muted-foreground">{rows.length} sailor{rows.length === 1 ? "" : "s"} matched</p>
       </div>
+
 
       <div className="glow-card overflow-hidden">
         <table className="w-full text-sm">
