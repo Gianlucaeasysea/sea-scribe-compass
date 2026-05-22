@@ -82,7 +82,7 @@ function FleetMap() {
             />
           </div>
           <span className="text-xs font-mono text-muted-foreground">
-            {filtered.length.toLocaleString()} / {total.toLocaleString()}
+            {formatNumber(filtered.length)} / {formatNumber(total)}
           </span>
         </div>
         <div className="flex flex-wrap gap-2">
