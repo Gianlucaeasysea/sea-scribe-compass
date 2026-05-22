@@ -24,6 +24,7 @@ function Fleet() {
   const [q, setQ] = useState("");
   const [tierFilter, setTierFilter] = useState<string | null>(null);
   const [tagFilter, setTagFilter] = useState<string | null>(null);
+  const [communityFilter, setCommunityFilter] = useState<"all" | "in" | "out">("all");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [newTag, setNewTag] = useState("");
 
@@ -33,12 +34,16 @@ function Fleet() {
     return Array.from(s).sort();
   }, [data]);
 
+  const inCommunity = (c: any) => !!c.circle_id || (c.tags ?? []).includes("circle-member");
+
   const rows = useMemo(() => {
     const list = data ?? [];
     const Q = q.toLowerCase();
     return list.filter((c: any) => {
       if (tierFilter && c.rfm?.tier !== tierFilter) return false;
       if (tagFilter && !(c.tags ?? []).includes(tagFilter)) return false;
+      if (communityFilter === "in" && !inCommunity(c)) return false;
+      if (communityFilter === "out" && inCommunity(c)) return false;
       if (!Q) return true;
       return (
         c.name?.toLowerCase().includes(Q) ||
@@ -46,7 +51,8 @@ function Fleet() {
         c.country?.toLowerCase().includes(Q)
       );
     });
-  }, [data, q, tierFilter, tagFilter]);
+  }, [data, q, tierFilter, tagFilter, communityFilter]);
+
 
   const tagMut = useMutation({
     mutationFn: (vars: { id: string; tags: string[] }) =>
