@@ -128,7 +128,7 @@ export const getMapCustomers = createServerFn({ method: "GET" })
     for (let from = 0; ; from += PAGE) {
       const { data, error } = await supabase
         .from("customers")
-        .select("id, name, email, country, city, lat, lng, lifetime_value, boat_type, tags, last_order_at, total_orders, avatar_seed, circle_id, shopify_id, klaviyo_id")
+        .select("id, name, email, country, city, lat, lng, lifetime_value, boat_type, boat_model, community_join_date, community_lead_status, tags, last_order_at, total_orders, avatar_seed, circle_id, shopify_id, klaviyo_id")
         .order("id", { ascending: true })
         .range(from, from + PAGE - 1);
       if (error) throw error;

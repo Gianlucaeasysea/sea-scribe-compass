@@ -193,6 +193,11 @@ function Fleet() {
                       )}
                     </p>
                     <p className="text-xs text-muted-foreground">{c.email}</p>
+                    {c.boat_model && (
+                      <p className="text-[11px] text-primary/80 truncate max-w-[280px]" title={c.boat_model}>
+                        ⛵ {c.boat_model}
+                      </p>
+                    )}
                     {(c.city || c.country) && (
                       <p className="text-[11px] text-muted-foreground">{[c.city, c.country].filter(Boolean).join(", ")}</p>
                     )}

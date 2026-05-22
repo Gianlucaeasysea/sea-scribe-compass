@@ -9,6 +9,7 @@ import {
   syncFacebook,
   syncCircle,
   syncZendesk,
+  syncGsheetBoats,
   saveIntegrationCredentials,
 } from "@/lib/sync.functions";
 import { Button } from "@/components/ui/button";
@@ -30,7 +31,7 @@ export const Route = createFileRoute("/_authenticated/integrations")({
   component: Integrations,
 });
 
-type IntegrationId = "shopify" | "klaviyo" | "facebook" | "circle" | "zendesk";
+type IntegrationId = "shopify" | "klaviyo" | "facebook" | "circle" | "zendesk" | "gsheet_boats";
 
 const META: Record<IntegrationId, { color: string; desc: string }> = {
   shopify: { color: "#96BF48", desc: "Orders, products, customers" },
@@ -38,16 +39,17 @@ const META: Record<IntegrationId, { color: string; desc: string }> = {
   facebook: { color: "#1877F2", desc: "Ad spend, audiences, conversions" },
   circle: { color: "#9333EA", desc: "Community posts & engagement" },
   zendesk: { color: "#03363D", desc: "Support tickets & satisfaction" },
+  gsheet_boats: { color: "#0F9D58", desc: "Community boat details — type, model, lead status" },
 };
 
 type FieldDef = { key: string; label: string; placeholder?: string; type?: string; defaultValue?: string };
 
-const CREDENTIAL_FORMS: Record<IntegrationId, {
+const CREDENTIAL_FORMS: Partial<Record<IntegrationId, {
   title: string;
   description: string;
   help: string;
   fields: FieldDef[];
-}> = {
+}>> = {
   shopify: {
     title: "Connect Shopify",
     description: "Enter your Shopify Admin API credentials",
@@ -104,6 +106,7 @@ function Integrations() {
     facebook: useServerFn(syncFacebook),
     circle: useServerFn(syncCircle),
     zendesk: useServerFn(syncZendesk),
+    gsheet_boats: useServerFn(syncGsheetBoats),
   } as const;
 
   const saveCreds = useServerFn(saveIntegrationCredentials);
@@ -142,8 +145,14 @@ function Integrations() {
   });
 
   const openConnect = (id: IntegrationId) => {
+    const form = CREDENTIAL_FORMS[id];
+    if (!form) {
+      // No credentials needed — sync immediately
+      mutation.mutate(id);
+      return;
+    }
     const defaults: Record<string, string> = {};
-    for (const f of CREDENTIAL_FORMS[id].fields) {
+    for (const f of form.fields) {
       if (f.defaultValue) defaults[f.key] = f.defaultValue;
     }
     setValues(defaults);
@@ -153,16 +162,18 @@ function Integrations() {
 
   const handleSaveCredentials = async () => {
     if (!openId) return;
+    const form = CREDENTIAL_FORMS[openId];
+    if (!form) return;
     setBusy(true);
     setError(null);
     const id = openId;
     try {
       // Require all fields filled
-      const missing = CREDENTIAL_FORMS[id].fields.filter((f) => !values[f.key]?.trim());
+      const missing = form.fields.filter((f) => !values[f.key]?.trim());
       if (missing.length) {
         throw new Error(`Missing: ${missing.map((m) => m.label).join(", ")}`);
       }
-      await saveCreds({ data: { id, credentials: values } });
+      await saveCreds({ data: { id: id as any, credentials: values } });
       qc.invalidateQueries({ queryKey: ["integrations"] });
       setOpenId(null);
       toast.success("Credentials saved — syncing now…");
@@ -175,7 +186,7 @@ function Integrations() {
     }
   };
 
-  const form = openId ? CREDENTIAL_FORMS[openId] : null;
+  const form = openId ? CREDENTIAL_FORMS[openId] ?? null : null;
 
   return (
     <div className="p-8 space-y-6 max-w-5xl mx-auto">
