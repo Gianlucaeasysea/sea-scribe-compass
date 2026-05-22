@@ -52,7 +52,7 @@ export const getMapCustomers = createServerFn({ method: "GET" })
     const { supabase } = context;
     const { data: customers } = await supabase
       .from("customers")
-      .select("id, name, email, country, city, lat, lng, lifetime_value, boat_type, tags, last_order_at, total_orders, avatar_seed");
+      .select("id, name, email, country, city, lat, lng, lifetime_value, boat_type, tags, last_order_at, total_orders, avatar_seed, circle_id, shopify_id, klaviyo_id");
     const { data: rfm } = await supabase.from("rfm_scores").select("customer_id, tier, recency_score, frequency_score, monetary_score, churn_risk");
     const { data: orders } = await supabase.from("orders").select("customer_id, line_items");
 
