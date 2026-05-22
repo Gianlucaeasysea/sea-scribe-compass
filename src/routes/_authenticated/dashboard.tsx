@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { getDashboardData } from "@/lib/queries.functions";
+import { getDashboardData, refreshFleet } from "@/lib/queries.functions";
 import { seedDemoData } from "@/lib/seed.functions";
 import { syncShopify, syncKlaviyo, syncFacebook, syncCircle } from "@/lib/sync.functions";
 import { Link } from "@tanstack/react-router";
