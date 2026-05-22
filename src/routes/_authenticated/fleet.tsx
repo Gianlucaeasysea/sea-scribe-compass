@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { formatDate } from "@/lib/format";
+import { tierIT } from "@/lib/i18n";
 import { Tag, Plus, X, MessageCircle, RefreshCw, ChevronLeft, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 
@@ -73,11 +74,11 @@ function Fleet() {
       if (r.klaviyoOnly) unmatched.push(`${r.klaviyoOnly} Klaviyo`);
       if (r.circleOnly) unmatched.push(`${r.circleOnly} Circle`);
       toast.success(
-        `Unified ${r.shopify} Shopify · ${r.klaviyoMatched} Klaviyo · ${r.circleMatched} Circle · ${r.facebookMatched} Facebook`,
+        `Unificati ${r.shopify} Shopify · ${r.klaviyoMatched} Klaviyo · ${r.circleMatched} Circle · ${r.facebookMatched} Facebook`,
         {
           description: unmatched.length
-            ? `No Shopify match for: ${unmatched.join(", ")}`
-            : "Every connector profile matched a Shopify customer.",
+            ? `Nessun match Shopify per: ${unmatched.join(", ")}`
+            : "Ogni profilo dei connettori ha trovato corrispondenza in Shopify.",
         },
       );
       qc.invalidateQueries({ queryKey: ["map"] });
@@ -89,7 +90,7 @@ function Fleet() {
   const tagMut = useMutation({
     mutationFn: (vars: { id: string; tags: string[] }) => updateTags({ data: vars }),
     onSuccess: () => {
-      toast.success("Tags updated");
+      toast.success("Tag aggiornati");
       qc.invalidateQueries({ queryKey: ["map"] });
     },
     onError: (e: any) => toast.error(e.message),
@@ -111,10 +112,10 @@ function Fleet() {
     <div className="p-8 space-y-6 max-w-7xl mx-auto">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <p className="font-mono text-xs text-primary tracking-widest">FLEET</p>
-          <h1 className="text-3xl font-semibold mt-1">All sailors</h1>
+          <p className="font-mono text-xs text-primary tracking-widest">CLIENTI</p>
+          <h1 className="text-3xl font-semibold mt-1">Clienti</h1>
           <p className="text-muted-foreground text-sm mt-1">
-            Unified profiles matched by email across Shopify, Klaviyo, Facebook & Circle.
+            Profili completi di tutti i diportisti, unificati per email tra Shopify, Klaviyo, Facebook & Circle.
           </p>
         </div>
         <Button
@@ -123,42 +124,42 @@ function Fleet() {
           className="shrink-0"
         >
           <RefreshCw className={`size-4 mr-2 ${refreshMut.isPending ? "animate-spin" : ""}`} />
-          {refreshMut.isPending ? "Refreshing…" : "Refresh & unify"}
+          {refreshMut.isPending ? "Aggiornamento…" : "Aggiorna e unifica"}
         </Button>
       </div>
 
       <div className="space-y-3">
         <Input
-          placeholder="Search by name, email, country…"
+          placeholder="Cerca per nome o email..."
           value={q}
           onChange={(e) => { setQ(e.target.value); setPage(1); }}
           className="max-w-md"
         />
         <div className="flex flex-wrap gap-2">
-          <Chip label="All tiers" active={tierFilter === null} onClick={() => { setTierFilter(null); setPage(1); }} />
+          <Chip label="Tutti i segmenti" active={tierFilter === null} onClick={() => { setTierFilter(null); setPage(1); }} />
           {TIERS.map((t) => (
-            <Chip key={t} label={t} active={tierFilter === t} onClick={() => { setTierFilter(t); setPage(1); }} />
+            <Chip key={t} label={tierIT(t)} active={tierFilter === t} onClick={() => { setTierFilter(t); setPage(1); }} />
           ))}
         </div>
         <div className="flex flex-wrap gap-2 items-center">
           <MessageCircle className="size-3.5 text-muted-foreground" />
-          <Chip label="All" active={communityFilter === "all"} onClick={() => { setCommunityFilter("all"); setPage(1); }} />
-          <Chip label="In Circle community" active={communityFilter === "in"} onClick={() => { setCommunityFilter("in"); setPage(1); }} />
+          <Chip label="Tutti" active={communityFilter === "all"} onClick={() => { setCommunityFilter("all"); setPage(1); }} />
+          <Chip label="In community Circle" active={communityFilter === "in"} onClick={() => { setCommunityFilter("in"); setPage(1); }} />
           <Chip label="Circle + Shopify" active={communityFilter === "both"} onClick={() => { setCommunityFilter("both"); setPage(1); }} />
-          <Chip label="Circle only (no Shopify)" active={communityFilter === "circle_only"} onClick={() => { setCommunityFilter("circle_only"); setPage(1); }} />
-          <Chip label="Not in community" active={communityFilter === "out"} onClick={() => { setCommunityFilter("out"); setPage(1); }} />
+          <Chip label="Solo Circle (no Shopify)" active={communityFilter === "circle_only"} onClick={() => { setCommunityFilter("circle_only"); setPage(1); }} />
+          <Chip label="Fuori community" active={communityFilter === "out"} onClick={() => { setCommunityFilter("out"); setPage(1); }} />
         </div>
         {allTags.length > 0 && (
           <div className="flex flex-wrap gap-2 items-center">
             <Tag className="size-3.5 text-muted-foreground" />
-            <Chip label="Any tag" active={tagFilter === null} onClick={() => { setTagFilter(null); setPage(1); }} />
+            <Chip label="Qualsiasi tag" active={tagFilter === null} onClick={() => { setTagFilter(null); setPage(1); }} />
             {allTags.map((t) => (
               <Chip key={t} label={t} active={tagFilter === t} onClick={() => { setTagFilter(t); setPage(1); }} />
             ))}
           </div>
         )}
         <p className="text-xs text-muted-foreground">
-          {rows.length} sailor{rows.length === 1 ? "" : "s"} matched · page {safePage}/{totalPages}
+          {rows.length} client{rows.length === 1 ? "e" : "i"} trovat{rows.length === 1 ? "o" : "i"} · pagina {safePage}/{totalPages}
         </p>
       </div>
 
@@ -166,12 +167,12 @@ function Fleet() {
         <table className="w-full text-sm">
           <thead className="bg-surface-2 text-xs uppercase tracking-wider text-muted-foreground">
             <tr>
-              <th className="text-left p-3">Sailor</th>
-              <th className="text-left p-3">Tier</th>
-              <th className="text-left p-3">Tags</th>
-              <th className="text-right p-3">LTV</th>
-              <th className="text-right p-3">Orders</th>
-              <th className="text-right p-3">Last order</th>
+              <th className="text-left p-3">Cliente</th>
+              <th className="text-left p-3">Segmento</th>
+              <th className="text-left p-3">Tag</th>
+              <th className="text-right p-3">Valore</th>
+              <th className="text-right p-3">Ordini</th>
+              <th className="text-right p-3">Ultimo acquisto</th>
             </tr>
           </thead>
           <tbody>
@@ -182,12 +183,12 @@ function Fleet() {
                     <p className="font-medium flex items-center gap-1.5 flex-wrap">
                       {c.name}
                       {inCommunity(c) && (
-                        <span title="In Circle community" className="inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded bg-purple-500/15 text-purple-300 border border-purple-500/40">
+                        <span title="In community Circle" className="inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded bg-purple-500/15 text-purple-300 border border-purple-500/40">
                           <MessageCircle className="size-2.5" /> Circle
                         </span>
                       )}
                       {inCommunity(c) && isShopify(c) && (
-                        <span title="Matched on Shopify + Circle" className="inline-flex items-center text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-300 border border-emerald-500/40">
+                        <span title="Match Shopify + Circle" className="inline-flex items-center text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-300 border border-emerald-500/40">
                           ✓ Shopify
                         </span>
                       )}
@@ -205,7 +206,7 @@ function Fleet() {
                 </td>
                 <td className="p-3">
                   <span className="text-xs px-2 py-0.5 rounded bg-primary/10 text-primary border border-primary/30">
-                    {c.rfm?.tier ?? "—"}
+                    {tierIT(c.rfm?.tier)}
                   </span>
                 </td>
                 <td className="p-3">
@@ -216,7 +217,7 @@ function Fleet() {
                         <button
                           onClick={() => removeTag(c, t)}
                           className="hover:text-destructive"
-                          aria-label={`Remove tag ${t}`}
+                          aria-label={`Rimuovi tag ${t}`}
                         >
                           <X className="size-3" />
                         </button>
@@ -259,21 +260,21 @@ function Fleet() {
             ))}
           </tbody>
         </table>
-        {rows.length === 0 && <p className="p-8 text-center text-muted-foreground text-sm">No sailors match these filters.</p>}
+        {rows.length === 0 && <p className="p-8 text-center text-muted-foreground text-sm">Nessun cliente corrisponde alla ricerca.</p>}
       </div>
 
       {totalPages > 1 && (
         <div className="flex items-center justify-between text-xs text-muted-foreground">
           <span>
-            Showing {(safePage - 1) * PAGE_SIZE + 1}–{Math.min(safePage * PAGE_SIZE, rows.length)} of {rows.length}
+            Mostrati {(safePage - 1) * PAGE_SIZE + 1}–{Math.min(safePage * PAGE_SIZE, rows.length)} di {rows.length}
           </span>
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" disabled={safePage <= 1} onClick={() => setPage(safePage - 1)}>
-              <ChevronLeft className="size-3 mr-1" /> Prev
+              <ChevronLeft className="size-3 mr-1" /> Indietro
             </Button>
             <span className="font-mono">{safePage} / {totalPages}</span>
             <Button variant="outline" size="sm" disabled={safePage >= totalPages} onClick={() => setPage(safePage + 1)}>
-              Next <ChevronRight className="size-3 ml-1" />
+              Avanti <ChevronRight className="size-3 ml-1" />
             </Button>
           </div>
         </div>

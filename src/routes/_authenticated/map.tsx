@@ -7,6 +7,7 @@ import { TIER_COLOR } from "@/lib/intelligence";
 import { Input } from "@/components/ui/input";
 import { Search, Tag as TagIcon, ArrowRight, MessageCircle } from "lucide-react";
 import { formatEuro } from "@/lib/format";
+import { tierIT } from "@/lib/i18n";
 
 export const Route = createFileRoute("/_authenticated/map")({
   component: FleetMap,
@@ -61,10 +62,10 @@ function FleetMap() {
   return (
     <div className="p-8 space-y-6 max-w-[1400px] mx-auto">
       <div>
-        <p className="font-mono text-xs text-primary tracking-widest">FLEET MAP</p>
-        <h1 className="text-3xl font-semibold mt-1">{total.toLocaleString()} sailors at a glance</h1>
+        <p className="font-mono text-xs text-primary tracking-widest">MAPPA CLIENTI</p>
+        <h1 className="text-3xl font-semibold mt-1">{total.toLocaleString()} clienti in vista</h1>
         <p className="text-muted-foreground text-sm mt-1">
-          Tier distribution, RFM positioning and revenue concentration — every customer in one screen.
+          Distribuzione geografica dei diportisti — segmenti, posizionamento RFM e concentrazione di valore in un'unica schermata.
         </p>
       </div>
 
@@ -74,7 +75,7 @@ function FleetMap() {
           <div className="relative flex-1 min-w-[200px]">
             <Search className="size-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
             <Input
-              placeholder="Search by name or email…"
+              placeholder="Cerca per nome o email..."
               value={q}
               onChange={(e) => setQ(e.target.value)}
               className="pl-9"
@@ -85,11 +86,11 @@ function FleetMap() {
           </span>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Chip label={`All · ${total.toLocaleString()}`} active={tier === null} onClick={() => setTier(null)} />
+          <Chip label={`Tutti · ${total.toLocaleString()}`} active={tier === null} onClick={() => setTier(null)} />
           {TIERS.map((t) => (
             <Chip
               key={t}
-              label={`${t} · ${(tierStats[t]?.count ?? 0).toLocaleString()}`}
+              label={`${tierIT(t)} · ${(tierStats[t]?.count ?? 0).toLocaleString()}`}
               active={tier === t}
               color={TIER_COLOR[t]}
               onClick={() => setTier(tier === t ? null : t)}
@@ -99,7 +100,7 @@ function FleetMap() {
         {allTags.length > 0 && (
           <div className="flex flex-wrap gap-2 items-center">
             <TagIcon className="size-3.5 text-muted-foreground" />
-            <Chip label="Any tag" active={tag === null} onClick={() => setTag(null)} />
+            <Chip label="Qualsiasi tag" active={tag === null} onClick={() => setTag(null)} />
             {allTags.map((t) => (
               <Chip key={t} label={t} active={tag === t} onClick={() => setTag(tag === t ? null : t)} />
             ))}
@@ -111,10 +112,10 @@ function FleetMap() {
       <div className="glow-card p-5 space-y-3">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="font-semibold">Revenue concentration by tier</h3>
-            <p className="text-xs text-muted-foreground">Bar width = % of lifetime revenue · click a tier to filter</p>
+            <h3 className="font-semibold">Concentrazione valore per segmento</h3>
+            <p className="text-xs text-muted-foreground">Larghezza = % del valore totale · clicca un segmento per filtrare</p>
           </div>
-          <span className="text-xs font-mono text-muted-foreground">Total {formatEuro(totalRevenue)}</span>
+          <span className="text-xs font-mono text-muted-foreground">Totale {formatEuro(totalRevenue)}</span>
         </div>
         <div className="flex h-14 rounded-md overflow-hidden border border-border">
           {[...TIERS, "Unscored"].map((t) => {
@@ -129,10 +130,10 @@ function FleetMap() {
                 onClick={() => setTier(tier === t ? null : (t as Tier))}
                 style={{ width: `${pct}%`, background: color, opacity: tier === null || tier === t ? 0.9 : 0.25 }}
                 className="relative group transition-opacity hover:opacity-100"
-                title={`${t} · ${s.count} customers · ${formatEuro(s.revenue)}`}
+                title={`${tierIT(t)} · ${s.count} clienti · ${formatEuro(s.revenue)}`}
               >
                 <span className="absolute inset-0 grid place-items-center text-[11px] font-mono text-white/90 px-1 truncate">
-                  {pct >= 5 ? `${t} ${pct.toFixed(0)}%` : ""}
+                  {pct >= 5 ? `${tierIT(t)} ${pct.toFixed(0)}%` : ""}
                 </span>
               </button>
             );
@@ -147,7 +148,7 @@ function FleetMap() {
               <div key={t} className="flex items-center gap-2 rounded-md border border-border bg-surface-2/40 px-2 py-1.5">
                 <span className="size-2.5 rounded-sm flex-shrink-0" style={{ background: color }} />
                 <div className="flex-1 min-w-0">
-                  <p className="truncate font-medium">{t}</p>
+                  <p className="truncate font-medium">{tierIT(t)}</p>
                   <p className="font-mono text-[10px] text-muted-foreground">{s.count.toLocaleString()} · {formatEuro(s.revenue)}</p>
                 </div>
               </div>
@@ -179,9 +180,9 @@ function FleetMap() {
             <p className="text-xs text-muted-foreground">{[hovered.city, hovered.country].filter(Boolean).join(", ")}</p>
           )}
           <div className="flex flex-wrap gap-1.5 text-xs">
-            <span className="px-2 py-0.5 rounded bg-primary/15 text-primary border border-primary/30">{hovered.rfm?.tier ?? "Unscored"}</span>
+            <span className="px-2 py-0.5 rounded bg-primary/15 text-primary border border-primary/30">{tierIT(hovered.rfm?.tier ?? "Unscored")}</span>
             <span className="font-mono text-emerald-400">{formatEuro(hovered.lifetime_value)}</span>
-            <span className="font-mono text-muted-foreground">{hovered.total_orders} orders</span>
+            <span className="font-mono text-muted-foreground">{hovered.total_orders} ordini</span>
             {hovered.circle_id && <MessageCircle className="size-3.5 text-violet-400" />}
           </div>
           {(hovered.tags ?? []).length > 0 && (
@@ -191,7 +192,7 @@ function FleetMap() {
               ))}
             </div>
           )}
-          <p className="text-[11px] text-primary inline-flex items-center gap-1">Click row to open <ArrowRight className="size-3" /></p>
+          <p className="text-[11px] text-primary inline-flex items-center gap-1">Clicca per aprire <ArrowRight className="size-3" /></p>
         </div>
       )}
     </div>
@@ -241,12 +242,12 @@ function RfmScatter({
     <div className="glow-card p-5 space-y-2">
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div>
-          <h3 className="font-semibold">RFM positioning</h3>
+          <h3 className="font-semibold">Posizionamento RFM</h3>
           <p className="text-xs text-muted-foreground">
-            X = days since last order · Y = lifetime value (log) · color = tier · size = LTV
+            X = giorni dall'ultimo ordine · Y = valore lifetime (log) · colore = segmento · dimensione = valore
           </p>
         </div>
-        <span className="text-xs font-mono text-muted-foreground">{points.length.toLocaleString()} dots</span>
+        <span className="text-xs font-mono text-muted-foreground">{points.length.toLocaleString()} clienti</span>
       </div>
       <div className="w-full overflow-x-auto">
         <svg
@@ -272,14 +273,14 @@ function RfmScatter({
               <g key={d}>
                 <line x1={x} x2={x} y1={PAD.t} y2={H - PAD.b} stroke="currentColor" strokeOpacity={0.05} />
                 <text x={x} y={H - PAD.b + 16} fontSize={10} textAnchor="middle" className="fill-muted-foreground font-mono">
-                  {d === 0 ? "today" : `${d}d`}
+                  {d === 0 ? "oggi" : `${d}g`}
                 </text>
               </g>
             );
           })}
           {/* axes labels */}
           <text x={PAD.l} y={H - 6} fontSize={10} className="fill-muted-foreground">
-            recency →
+            recenza →
           </text>
 
           {/* dots */}
@@ -350,13 +351,13 @@ function CustomerList({
   return (
     <div className="glow-card p-0 overflow-hidden">
       <div className="flex items-center justify-between px-5 py-3 border-b border-border">
-        <h3 className="font-semibold">Fleet leaderboard</h3>
-        <span className="text-xs font-mono text-muted-foreground">{sorted.length.toLocaleString()} sailors · sorted by LTV</span>
+        <h3 className="font-semibold">Classifica clienti</h3>
+        <span className="text-xs font-mono text-muted-foreground">{sorted.length.toLocaleString()} clienti · ordinati per valore</span>
       </div>
       <div ref={ref} className="overflow-auto" style={{ height: 560 }}>
-        {loading && <p className="text-sm text-muted-foreground text-center py-20">Loading fleet…</p>}
+        {loading && <p className="text-sm text-muted-foreground text-center py-20">Caricamento…</p>}
         {!loading && sorted.length === 0 && (
-          <p className="text-sm text-muted-foreground text-center py-20">No sailors match these filters.</p>
+          <p className="text-sm text-muted-foreground text-center py-20">Nessun cliente corrisponde alla ricerca.</p>
         )}
         <div style={{ height: sorted.length * ROW_H, position: "relative" }}>
           <div style={{ position: "absolute", top: start * ROW_H, left: 0, right: 0 }}>
@@ -379,7 +380,7 @@ function CustomerList({
                   </div>
                   <div className="flex items-center gap-2 min-w-0">
                     <span className="size-2 rounded-full flex-shrink-0" style={{ background: tierColor }} />
-                    <span className="text-xs truncate">{c.rfm?.tier ?? "Unscored"}</span>
+                    <span className="text-xs truncate">{tierIT(c.rfm?.tier ?? "Unscored")}</span>
                   </div>
                   <span className="font-mono text-sm text-emerald-400 tabular-nums">{formatEuro(c.lifetime_value)}</span>
                   <span className="font-mono text-xs text-muted-foreground tabular-nums">{c.total_orders} ord</span>
