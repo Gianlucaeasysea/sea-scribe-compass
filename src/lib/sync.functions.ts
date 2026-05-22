@@ -371,9 +371,14 @@ export const syncFacebook = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async () => {
     try {
-      const token = process.env.FACEBOOK_ADS_ACCESS_TOKEN;
-      const acct = process.env.FACEBOOK_AD_ACCOUNT_ID;
-      if (!token || !acct) throw new Error("Facebook Ads env vars missing");
+      const stored = await loadCredentials("facebook");
+      const token = stored.access_token || process.env.FACEBOOK_ADS_ACCESS_TOKEN;
+      const acct = stored.ad_account_id || process.env.FACEBOOK_AD_ACCOUNT_ID;
+      if (!token || !acct) {
+        const msg = "Facebook Ads credentials not configured. Click Connect to add access_token and ad_account_id.";
+        await markStatus("facebook", "Facebook Ads", false, 0, msg);
+        return { ok: false, message: msg };
+      }
       const acctId = acct.startsWith("act_") ? acct : `act_${acct}`;
 
       // Aggregate spend per campaign for last 30 days
