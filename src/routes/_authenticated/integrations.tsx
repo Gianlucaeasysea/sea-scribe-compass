@@ -80,6 +80,7 @@ const CREDENTIAL_FORMS: Record<IntegrationId, {
       { key: "api_token", label: "API token", placeholder: "circle_...", type: "password" },
       { key: "community_id", label: "Community ID", placeholder: "12345" },
     ],
+  },
   zendesk: {
     title: "Connect Zendesk",
     description: "Enter your Zendesk API credentials",
