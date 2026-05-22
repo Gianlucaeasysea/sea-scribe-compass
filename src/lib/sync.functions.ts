@@ -174,7 +174,7 @@ export const syncShopify = createServerFn({ method: "POST" })
       const stored = await loadCredentials("shopify");
       const hasToken = Boolean(stored.access_token || process.env.SHOPIFY_ACCESS_TOKEN || process.env.SHOPIFY_CUSTOM_ADMIN_TOKEN);
       if (!hasToken) {
-        const msg = "Shopify API token not configured. Click Connect to add your credentials.";
+        const msg = "Token Shopify non configurato. Clicca 'Edit credentials' per aggiungerlo.";
         await markStatus("shopify", "Shopify", false, 0, msg);
         return { ok: false, message: msg };
       }
