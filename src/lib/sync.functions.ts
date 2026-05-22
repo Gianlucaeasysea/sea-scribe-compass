@@ -427,9 +427,14 @@ export const syncCircle = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async () => {
     try {
-      const token = process.env.CIRCLE_API_TOKEN;
-      const community = process.env.CIRCLE_COMMUNITY_ID;
-      if (!token || !community) throw new Error("Circle env vars missing");
+      const stored = await loadCredentials("circle");
+      const token = stored.api_token || process.env.CIRCLE_API_TOKEN;
+      const community = stored.community_id || process.env.CIRCLE_COMMUNITY_ID;
+      if (!token || !community) {
+        const msg = "Circle credentials not configured. Click Connect to add api_token and community_id.";
+        await markStatus("circle", "Circle", false, 0, msg);
+        return { ok: false, message: msg };
+      }
 
       const res = await fetch(
         `https://app.circle.so/api/v1/community_members?community_id=${community}&per_page=100`,
