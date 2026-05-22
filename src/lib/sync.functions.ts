@@ -236,6 +236,13 @@ async function upsertInBatches(table: "customers" | "orders", rows: any[], onCon
 
 export const syncShopify = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
+  .inputValidator((input?: ShopifyPageSyncInput) => ({
+    nextCustomersPath: input?.nextCustomersPath ?? null,
+    nextOrdersPath: input?.nextOrdersPath ?? null,
+    productCount: input?.productCount ?? null,
+    customersSynced: input?.customersSynced ?? 0,
+    ordersSynced: input?.ordersSynced ?? 0,
+  }))
   .handler(async () => {
     try {
       const stored = await loadCredentials("shopify");
