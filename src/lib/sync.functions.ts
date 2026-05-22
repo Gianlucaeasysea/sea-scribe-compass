@@ -439,22 +439,34 @@ export const syncCircle = createServerFn({ method: "POST" })
         return { ok: false, message: msg };
       }
 
-      const res = await fetch(
-        `https://app.circle.so/api/v1/community_members?community_id=${community}&per_page=100`,
-        { headers: { Authorization: `Token ${token}` } },
-      );
-      if (!res.ok) throw new Error(`Circle ${res.status}: ${await res.text()}`);
-      const members = (await res.json()) as any[];
+      const allMembers: any[] = [];
+      let page = 1;
+      let hasMore = true;
+      while (hasMore && page <= 20) {
+        const res: Response = await fetch(
+          `https://app.circle.so/api/v1/community_members?community_id=${community}&per_page=100&page=${page}`,
+          { headers: { Authorization: `Token ${token}` } },
+        );
+        if (!res.ok) throw new Error(`Circle ${res.status}: ${await res.text()}`);
+        const batch = (await res.json()) as any[];
+        if (!Array.isArray(batch) || batch.length === 0) {
+          hasMore = false;
+        } else {
+          allMembers.push(...batch);
+          hasMore = batch.length === 100;
+          page++;
+        }
+      }
 
-      const emails = members.map((m) => m.email).filter(Boolean);
+      const emails = allMembers.map((m: any) => m.email).filter(Boolean);
       const { data: existing } = emails.length
         ? await supabaseAdmin.from("customers").select("id, email").in("email", emails)
         : { data: [] as { id: string; email: string }[] };
       const byEmail = new Map((existing ?? []).map((c) => [c.email, c.id]));
 
-      const rows = members
-        .filter((m) => byEmail.has(m.email))
-        .map((m) => ({
+      const rows = allMembers
+        .filter((m: any) => byEmail.has(m.email))
+        .map((m: any) => ({
           customer_id: byEmail.get(m.email)!,
           posts: Number(m.posts_count ?? 0),
           comments: Number(m.comments_count ?? 0),
@@ -470,7 +482,7 @@ export const syncCircle = createServerFn({ method: "POST" })
       if (rows.length) {
         await supabaseAdmin.from("circle_activity").upsert(rows, { onConflict: "customer_id" });
       }
-      const msg = `${members.length} members · ${rows.length} matched`;
+      const msg = `${allMembers.length} members · ${rows.length} matched`;
       await markStatus("circle", "Circle", true, rows.length, msg);
       return { ok: true, message: msg };
     } catch (e) {
