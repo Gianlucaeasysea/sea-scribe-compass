@@ -9,26 +9,45 @@ const MODEL = "claude-sonnet-4-5";
 type ChatMsg = { role: "user" | "assistant"; content: string };
 
 async function buildBusinessSnapshot() {
-  // Paginate where rows can exceed 1000
-  async function paginate<T>(table: string, columns: string): Promise<T[]> {
-    const out: T[] = [];
-    for (let from = 0; ; from += 1000) {
-      const { data, error } = await supabaseAdmin
-        .from(table)
-        .select(columns)
-        .range(from, from + 999);
-      if (error) break;
-      if (!data || data.length === 0) break;
-      out.push(...(data as T[]));
-      if (data.length < 1000) break;
-    }
-    return out;
+  // Paginate customers (>1000 rows)
+  type CustomerRow = {
+    lifetime_value: number | null;
+    total_orders: number | null;
+    boat_type: string | null;
+    country: string | null;
+    tags: string[] | null;
+    community_join_date: string | null;
+    last_order_at: string | null;
+  };
+  const customers: CustomerRow[] = [];
+  for (let from = 0; ; from += 1000) {
+    const { data, error } = await supabaseAdmin
+      .from("customers")
+      .select(
+        "lifetime_value, total_orders, boat_type, country, tags, community_join_date, last_order_at",
+      )
+      .range(from, from + 999);
+    if (error) break;
+    if (!data || data.length === 0) break;
+    customers.push(...(data as CustomerRow[]));
+    if (data.length < 1000) break;
+  }
+
+  // Paginate rfm
+  const rfm: { tier: string; churn_risk: number | null }[] = [];
+  for (let from = 0; ; from += 1000) {
+    const { data, error } = await supabaseAdmin
+      .from("rfm_scores")
+      .select("tier, churn_risk")
+      .range(from, from + 999);
+    if (error) break;
+    if (!data || data.length === 0) break;
+    rfm.push(...data);
+    if (data.length < 1000) break;
   }
 
   const [
     { count: totalCustomers },
-    customers,
-    rfm,
     actions,
     integrations,
     recentOrders,
@@ -36,25 +55,24 @@ async function buildBusinessSnapshot() {
     tickets,
   ] = await Promise.all([
     supabaseAdmin.from("customers").select("*", { count: "exact", head: true }),
-    paginate<{
-      lifetime_value: number;
-      total_orders: number;
-      boat_type: string | null;
-      country: string | null;
-      tags: string[] | null;
-      community_join_date: string | null;
-      last_order_at: string | null;
-    }>("customers", "lifetime_value, total_orders, boat_type, country, tags, community_join_date, last_order_at"),
-    paginate<{ tier: string; churn_risk: number }>("rfm_scores", "tier, churn_risk"),
-    supabaseAdmin.from("marketing_actions").select("title, segment_name, channel, status, expected_revenue, priority"),
-    supabaseAdmin.from("integrations_status").select("id, name, connected, records_synced, last_sync_at"),
+    supabaseAdmin
+      .from("marketing_actions")
+      .select("title, segment_name, channel, status, expected_revenue, priority"),
+    supabaseAdmin
+      .from("integrations_status")
+      .select("id, name, connected, records_synced, last_sync_at"),
     supabaseAdmin
       .from("orders")
       .select("total, created_at, line_items")
       .order("created_at", { ascending: false })
       .limit(50),
-    supabaseAdmin.from("segments").select("name, description, customer_count, avg_ltv"),
-    supabaseAdmin.from("zendesk_tickets").select("status, priority, satisfaction_rating").limit(500),
+    supabaseAdmin
+      .from("segments")
+      .select("name, description, customer_count, avg_ltv"),
+    supabaseAdmin
+      .from("zendesk_tickets")
+      .select("status, priority, satisfaction_rating")
+      .limit(500),
   ]);
 
   const totalRevenue = customers.reduce((s, c) => s + Number(c.lifetime_value || 0), 0);
