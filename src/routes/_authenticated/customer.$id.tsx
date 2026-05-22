@@ -58,7 +58,7 @@ function CustomerProfile() {
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Stat label="Lifetime value" value={`€${Math.round(c.lifetime_value).toLocaleString()}`} />
+        <Stat label="Lifetime value" value={formatEuro(Math.round(c.lifetime_value))} />
         <Stat label="Orders" value={c.total_orders} icon={ShoppingBag} />
         <Stat label="Email open rate" value={`${openRate}%`} icon={Mail} />
         <Stat label="Churn risk" value={`${data.rfm?.churn_risk ?? 0}%`} icon={TrendingDown} tone={data.rfm && data.rfm.churn_risk > 60 ? "coral" : undefined} />
