@@ -26,6 +26,21 @@ function CustomerProfile() {
   const sent = data.emails.length;
   const openRate = sent ? Math.round((opens / sent) * 100) : 0;
 
+  const tickets = (data as any).tickets ?? [];
+  const solvedStatuses = new Set(["solved", "closed"]);
+  const openStatuses = new Set(["open", "new"]);
+  const ticketsSolved = tickets.filter((t: any) => solvedStatuses.has((t.status ?? "").toLowerCase())).length;
+  const ticketsOpen = tickets.filter((t: any) => openStatuses.has((t.status ?? "").toLowerCase())).length;
+  const badSat = tickets.some((t: any) => (t.satisfaction_rating ?? "").toLowerCase() === "bad");
+  const supportRisk = ticketsOpen >= 2 || badSat;
+  const ticketCountTone =
+    tickets.length === 0
+      ? "bg-emerald-500/15 text-emerald-300 border-emerald-500/40"
+      : tickets.length <= 2
+        ? "bg-amber-500/15 text-amber-300 border-amber-500/40"
+        : "bg-red-500/15 text-red-300 border-red-500/40";
+  const resolutionRate = tickets.length ? Math.round((ticketsSolved / tickets.length) * 100) : 0;
+
   const lastOrderAt = c.last_order_at ? new Date(c.last_order_at) : null;
   const daysSince = lastOrderAt
     ? Math.max(0, Math.floor((Date.now() - lastOrderAt.getTime()) / 86_400_000))
