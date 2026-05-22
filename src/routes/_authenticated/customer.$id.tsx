@@ -78,7 +78,7 @@ function CustomerProfile() {
                     ))}
                   </div>
                   <p className="text-xs text-muted-foreground mt-1">
-                    {new Date(o.created_at).toLocaleDateString()} · {(Array.isArray(o.line_items) ? o.line_items : []).map((it: any) => it.name).join(", ")}
+                    {formatDate(o.created_at)} · {(Array.isArray(o.line_items) ? o.line_items : []).map((it: any) => it.name).join(", ")}
                   </p>
                 </div>
                 <div className="text-right">
