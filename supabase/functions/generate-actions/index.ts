@@ -38,11 +38,11 @@ Deno.serve(async (req) => {
   try {
     const { snapshot } = await req.json();
     const safeSnapshot = snapshot ?? {};
-    const userPrompt = `Today's Easysea business snapshot:
+    const userPrompt = `Snapshot odierno del business Easysea:
 
 ${JSON.stringify(safeSnapshot, null, 2)}
 
-Return 5-10 prioritized marketing actions sorted by priority_score (highest first).`;
+Restituisci 5-10 azioni marketing prioritizzate, ordinate per priority_score (più alto prima). Tutto in italiano.`;
 
     const analysis = await claudeStructured({
       system: SYSTEM_PROMPT,
