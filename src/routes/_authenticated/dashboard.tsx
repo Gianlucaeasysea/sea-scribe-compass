@@ -3,14 +3,17 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { getDashboardData } from "@/lib/queries.functions";
 import { seedDemoData } from "@/lib/seed.functions";
+import { syncShopify, syncKlaviyo, syncFacebook, syncCircle } from "@/lib/sync.functions";
 import { Link } from "@tanstack/react-router";
 import {
   Users, TrendingUp, AlertTriangle, Crown, DollarSign, Sparkles, Database, ArrowRight,
+  RefreshCw, Zap,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { formatEuro } from "@/lib/format";
 import { ClaudeActionsFeed } from "@/components/ai/claude-actions-feed";
+import { useState } from "react";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   component: Dashboard,
@@ -28,8 +31,12 @@ const TIER_COLORS: Record<string, string> = {
 function Dashboard() {
   const fetch = useServerFn(getDashboardData);
   const seed = useServerFn(seedDemoData);
+  const shopifyFn = useServerFn(syncShopify);
+  const klaviyoFn = useServerFn(syncKlaviyo);
+  const facebookFn = useServerFn(syncFacebook);
+  const circleFn = useServerFn(syncCircle);
   const qc = useQueryClient();
-  const { data, isLoading } = useQuery({ queryKey: ["dashboard"], queryFn: () => fetch({}) });
+  const { data, isLoading, isFetching } = useQuery({ queryKey: ["dashboard"], queryFn: () => fetch({}) });
   const seedMut = useMutation({
     mutationFn: () => seed({}),
     onSuccess: (r: any) => {
@@ -39,11 +46,47 @@ function Dashboard() {
     onError: (e: any) => toast.error(e.message),
   });
 
+  const [syncStep, setSyncStep] = useState<string | null>(null);
+  const syncAllMut = useMutation({
+    mutationFn: async () => {
+      const summary: Record<string, string> = {};
+      // Shopify (paginated loop)
+      setSyncStep("shopify");
+      let s: any = await shopifyFn({ data: {} });
+      while (s?.ok && !s.done) {
+        s = await shopifyFn({
+          data: {
+            nextCustomersPath: s.nextCustomersPath,
+            nextOrdersPath: s.nextOrdersPath,
+            productCount: s.productCount,
+            customersSynced: s.customersSynced,
+            ordersSynced: s.ordersSynced,
+          },
+        });
+      }
+      summary.shopify = s?.message ?? "done";
+      // Klaviyo / Facebook / Circle in parallel (they match by email into customers)
+      setSyncStep("klaviyo · facebook · circle");
+      const [k, f, c] = await Promise.allSettled([klaviyoFn({}), facebookFn({}), circleFn({})]);
+      summary.klaviyo = k.status === "fulfilled" ? (k.value as any).message : (k.reason?.message ?? "failed");
+      summary.facebook = f.status === "fulfilled" ? (f.value as any).message : (f.reason?.message ?? "failed");
+      summary.circle = c.status === "fulfilled" ? (c.value as any).message : (c.reason?.message ?? "failed");
+      return summary;
+    },
+    onSuccess: (summary) => {
+      toast.success("Fleet unified by email across all sources");
+      Object.entries(summary).forEach(([k, v]) => toast.message(`${k}: ${v}`));
+      qc.invalidateQueries();
+    },
+    onError: (e: any) => toast.error(e.message?.slice(0, 200) ?? "Sync failed"),
+    onSettled: () => setSyncStep(null),
+  });
+
   const empty = !isLoading && data && data.kpi.totalCustomers === 0;
 
   return (
     <div className="p-8 space-y-8 max-w-7xl mx-auto">
-      <div className="flex items-end justify-between">
+      <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="font-mono text-xs text-primary tracking-widest">THE BRIDGE</p>
           <h1 className="text-3xl font-semibold mt-1">Good seas ahead</h1>
@@ -51,11 +94,30 @@ function Dashboard() {
             Your fleet at a glance — signal strength, opportunities, and pending actions.
           </p>
         </div>
-        <Button onClick={() => seedMut.mutate()} disabled={seedMut.isPending} variant="outline">
-          <Database className="size-4 mr-2" />
-          {seedMut.isPending ? "Loading sample data…" : "Load sample fleet"}
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button
+            onClick={() => syncAllMut.mutate()}
+            disabled={syncAllMut.isPending}
+            className="bg-primary text-primary-foreground"
+          >
+            <Zap className={`size-4 mr-2 ${syncAllMut.isPending ? "animate-pulse" : ""}`} />
+            {syncAllMut.isPending ? `Syncing ${syncStep ?? "…"}` : "Sync all sources"}
+          </Button>
+          <Button
+            onClick={() => qc.invalidateQueries()}
+            variant="outline"
+            disabled={isFetching || syncAllMut.isPending}
+          >
+            <RefreshCw className={`size-4 mr-2 ${isFetching ? "animate-spin" : ""}`} />
+            Refresh
+          </Button>
+          <Button onClick={() => seedMut.mutate()} disabled={seedMut.isPending} variant="ghost">
+            <Database className="size-4 mr-2" />
+            {seedMut.isPending ? "Loading…" : "Sample fleet"}
+          </Button>
+        </div>
       </div>
+
 
       {empty && (
         <div className="glow-card p-12 text-center space-y-4">
