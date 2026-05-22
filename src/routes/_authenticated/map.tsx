@@ -112,10 +112,10 @@ function FleetMap() {
       <div className="glow-card p-5 space-y-3">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="font-semibold">Revenue concentration by tier</h3>
-            <p className="text-xs text-muted-foreground">Bar width = % of lifetime revenue · click a tier to filter</p>
+            <h3 className="font-semibold">Concentrazione valore per segmento</h3>
+            <p className="text-xs text-muted-foreground">Larghezza = % del valore totale · clicca un segmento per filtrare</p>
           </div>
-          <span className="text-xs font-mono text-muted-foreground">Total {formatEuro(totalRevenue)}</span>
+          <span className="text-xs font-mono text-muted-foreground">Totale {formatEuro(totalRevenue)}</span>
         </div>
         <div className="flex h-14 rounded-md overflow-hidden border border-border">
           {[...TIERS, "Unscored"].map((t) => {
