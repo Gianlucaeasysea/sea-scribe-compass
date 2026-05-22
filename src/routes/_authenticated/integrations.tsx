@@ -23,9 +23,10 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { CheckCircle2, Circle, Loader2, RefreshCw } from "lucide-react";
+import { Loader2, RefreshCw, Package } from "lucide-react";
 import { toast } from "sonner";
-import { formatDate, formatNumber } from "@/lib/format";
+import { formatNumber } from "@/lib/format";
+import { relativeTimeIT, translateStatusMessage } from "@/lib/i18n";
 
 export const Route = createFileRoute("/_authenticated/integrations")({
   component: Integrations,
@@ -191,10 +192,10 @@ function Integrations() {
   return (
     <div className="p-8 space-y-6 max-w-5xl mx-auto">
       <div>
-        <p className="font-mono text-xs text-primary tracking-widest">INTEGRATIONS</p>
-        <h1 className="text-3xl font-semibold mt-1">Data sources</h1>
+        <p className="font-mono text-xs text-primary tracking-widest">CONNETTORI</p>
+        <h1 className="text-3xl font-semibold mt-1">Sorgenti dati</h1>
         <p className="text-muted-foreground text-sm mt-1">
-          Pull live data from Easysea's marketing stack into the bridge.
+          Importa i dati live dello stack marketing di Easysea nella bridge.
         </p>
       </div>
 
@@ -203,8 +204,9 @@ function Integrations() {
           const id = i.id as IntegrationId;
           const meta = META[id] ?? { color: "#00D4FF", desc: "" };
           const isLoading = mutation.isPending && mutation.variables === id;
-          const msg: string = i.status_message ?? "";
-          const lower = msg.toLowerCase();
+          const rawMsg: string = i.status_message ?? "";
+          const msg = translateStatusMessage(rawMsg);
+          const lower = rawMsg.toLowerCase();
           const isWarn =
             lower.includes("not configured") || lower.includes("not connected");
           const isError =
@@ -222,8 +224,12 @@ function Integrations() {
                 ? "text-emerald-400"
                 : "text-muted-foreground";
           return (
-            <div key={i.id} className="glow-card p-5 space-y-3">
-              <div className="flex items-start justify-between">
+            <div
+              key={i.id}
+              className="glow-card p-5 space-y-3 relative overflow-hidden"
+              style={{ borderLeft: `3px solid ${meta.color}` }}
+            >
+              <div className="flex items-start justify-between gap-3">
                 <div className="flex items-center gap-3 min-w-0">
                   <div
                     className="size-10 rounded-lg grid place-items-center font-bold text-white shrink-0"
@@ -232,7 +238,17 @@ function Integrations() {
                     {i.name[0]}
                   </div>
                   <div className="min-w-0">
-                    <h3 className="font-semibold">{i.name}</h3>
+                    <h3 className="font-semibold flex items-center gap-2">
+                      {i.name}
+                      <span className="relative inline-flex">
+                        <span
+                          className={`size-2 rounded-full ${i.connected ? "bg-emerald-400" : "bg-muted-foreground/50"}`}
+                        />
+                        {i.connected && (
+                          <span className="absolute inset-0 size-2 rounded-full bg-emerald-400 animate-ping opacity-75" />
+                        )}
+                      </span>
+                    </h3>
                     <p className="text-xs text-muted-foreground">{meta.desc}</p>
                     {msg && (
                       <p className={`text-xs mt-1 break-words ${statusTone}`}>
@@ -241,20 +257,18 @@ function Integrations() {
                     )}
                   </div>
                 </div>
-                {i.connected ? (
-                  <CheckCircle2 className="size-5 text-emerald-400 shrink-0" />
-                ) : (
-                  <Circle className="size-5 text-muted-foreground shrink-0" />
-                )}
               </div>
-              <div className="flex items-center justify-between text-xs text-muted-foreground">
-                <span className="truncate pr-2">
+              <div className="flex items-center justify-between text-xs text-muted-foreground gap-2">
+                <span className="inline-flex items-center gap-1 truncate">
+                  <Package className="size-3" />
                   {i.connected
-                    ? `${formatNumber(i.records_synced ?? 0)} records · synced`
-                    : "Awaiting first sync"}
+                    ? `${formatNumber(i.records_synced ?? 0)} record`
+                    : "In attesa prima sync"}
                 </span>
                 {i.last_sync_at && (
-                  <span className="font-mono shrink-0">{formatDate(i.last_sync_at)}</span>
+                  <span className="font-mono shrink-0">
+                    Ultima sync: {relativeTimeIT(i.last_sync_at)}
+                  </span>
                 )}
               </div>
               <div className="flex gap-2">
@@ -270,19 +284,19 @@ function Integrations() {
                 >
                   {isLoading ? (
                     <>
-                      <Loader2 className="size-4 mr-2 animate-spin" /> Syncing…
+                      <Loader2 className="size-4 mr-2 animate-spin" /> Sincronizzazione…
                     </>
                   ) : i.connected ? (
                     <>
-                      <RefreshCw className="size-4 mr-2" /> Sync now
+                      <RefreshCw className="size-4 mr-2" /> Sincronizza ora
                     </>
                   ) : (
-                    "Connect & sync"
+                    "Connetti e sincronizza"
                   )}
                 </Button>
                 {CREDENTIAL_FORMS[id] && (
                   <Button variant="ghost" size="sm" onClick={() => openConnect(id)}>
-                    Edit credentials
+                    Modifica credenziali
                   </Button>
                 )}
               </div>
@@ -290,6 +304,7 @@ function Integrations() {
           );
         })}
       </div>
+
 
       <Dialog
         open={openId !== null}

@@ -6,8 +6,8 @@ import { useMemo, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { formatDate } from "@/lib/format";
-import { tierIT } from "@/lib/i18n";
+import { formatDate, formatEuro } from "@/lib/format";
+import { tierIT, tierBadgeClass, boatIcon } from "@/lib/i18n";
 import { Tag, Plus, X, MessageCircle, RefreshCw, ChevronLeft, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 
@@ -177,10 +177,15 @@ function Fleet() {
           </thead>
           <tbody>
             {pageRows.map((c: any) => (
-              <tr key={c.id} className="border-t border-border hover:bg-surface-2/40 transition align-top">
+              <tr key={c.id} className="border-t border-border hover:bg-[var(--brand-accent-glow)] transition align-top">
                 <td className="p-3">
                   <Link to="/customer/$id" params={{ id: c.id }} className="hover:text-primary">
                     <p className="font-medium flex items-center gap-1.5 flex-wrap">
+                      {c.boat_type && (
+                        <span title={c.boat_type} aria-hidden>
+                          {boatIcon(c.boat_type)}
+                        </span>
+                      )}
                       {c.name}
                       {inCommunity(c) && (
                         <span title="In community Circle" className="inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded bg-purple-500/15 text-purple-300 border border-purple-500/40">
@@ -196,7 +201,7 @@ function Fleet() {
                     <p className="text-xs text-muted-foreground">{c.email}</p>
                     {c.boat_model && (
                       <p className="text-[11px] text-primary/80 truncate max-w-[280px]" title={c.boat_model}>
-                        ⛵ {c.boat_model}
+                        {c.boat_model}
                       </p>
                     )}
                     {(c.city || c.country) && (
@@ -205,10 +210,11 @@ function Fleet() {
                   </Link>
                 </td>
                 <td className="p-3">
-                  <span className="text-xs px-2 py-0.5 rounded bg-primary/10 text-primary border border-primary/30">
+                  <span className={`text-[10px] uppercase tracking-wider font-semibold px-2 py-0.5 rounded-full border ${tierBadgeClass(c.rfm?.tier)}`}>
                     {tierIT(c.rfm?.tier)}
                   </span>
                 </td>
+
                 <td className="p-3">
                   <div className="flex flex-wrap gap-1 items-center max-w-xs">
                     {(c.tags ?? []).map((t: string) => (
@@ -251,7 +257,7 @@ function Fleet() {
                     )}
                   </div>
                 </td>
-                <td className="p-3 text-right font-mono">€{Math.round(c.lifetime_value)}</td>
+                <td className="p-3 text-right font-mono text-primary">{formatEuro(Math.round(c.lifetime_value))}</td>
                 <td className="p-3 text-right font-mono text-muted-foreground">{c.total_orders}</td>
                 <td className="p-3 text-right text-xs text-muted-foreground">
                   {formatDate(c.last_order_at)}

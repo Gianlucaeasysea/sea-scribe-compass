@@ -5,6 +5,7 @@ import { getCustomerProfile } from "@/lib/queries.functions";
 import { ArrowLeft, Mail, MapPin, Anchor, MessageCircle, TrendingDown, ShoppingBag, LifeBuoy, AlertTriangle, Ship } from "lucide-react";
 import { useState } from "react";
 import { formatDate, formatEuro } from "@/lib/format";
+import { tierIT, tierBadgeClass, boatIcon, countryFlag } from "@/lib/i18n";
 import { ClaudeCustomerInsights } from "@/components/ai/claude-customer-insights";
 
 export const Route = createFileRoute("/_authenticated/customer/$id")({
@@ -68,46 +69,62 @@ function CustomerProfile() {
   return (
     <div className="p-8 space-y-6 max-w-7xl mx-auto">
       <Link to="/map" className="inline-flex items-center text-xs text-muted-foreground hover:text-primary">
-        <ArrowLeft className="size-3 mr-1" /> Back to Honeycomb
+        <ArrowLeft className="size-3 mr-1" /> Torna alla mappa
       </Link>
 
-      <div className="glow-card p-6 flex items-start gap-6">
-        <div className="size-20 rounded-full bg-gradient-to-br from-primary/40 to-primary/10 grid place-items-center text-3xl font-mono text-primary border border-primary/40">
-          {c.name?.[0] ?? "?"}
+      <div
+        className="glow-card p-8 flex flex-wrap items-start gap-6 relative overflow-hidden"
+        style={{ background: "linear-gradient(135deg, var(--bg-elevated), var(--bg-base))" }}
+      >
+        <div className={`size-24 rounded-full grid place-items-center text-4xl font-mono border-2 shrink-0 ${tierBadgeClass(data.rfm?.tier)}`}>
+          {c.name?.[0]?.toUpperCase() ?? "?"}
         </div>
-        <div className="flex-1 space-y-1">
-          <h1 className="text-2xl font-semibold flex items-center gap-2">
+        <div className="flex-1 min-w-0 space-y-2">
+          <h1 className="text-3xl font-semibold flex items-center gap-3 flex-wrap">
             {c.name}
+            {c.country && <span className="text-2xl leading-none" title={c.country}>{countryFlag(c.country)}</span>}
+            {c.boat_type && (
+              <span className="inline-flex items-center gap-1 text-xs uppercase tracking-wider px-2 py-1 rounded-full bg-primary/15 text-primary border border-primary/40">
+                <span aria-hidden>{boatIcon(c.boat_type)}</span> {c.boat_type}
+              </span>
+            )}
             {(c.circle_id || (c.tags ?? []).includes("circle-member")) && (
-              <span title="Member of Circle community" className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wider px-2 py-0.5 rounded bg-purple-500/15 text-purple-300 border border-purple-500/40">
-                <MessageCircle className="size-3" /> Circle community
+              <span title="Membro della community Circle" className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wider px-2 py-0.5 rounded bg-purple-500/15 text-purple-300 border border-purple-500/40">
+                <MessageCircle className="size-3" /> Circle
               </span>
             )}
             {supportRisk && (
-              <span title={`${ticketsOpen} open ticket(s)${badSat ? " · bad satisfaction" : ""}`} className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wider px-2 py-0.5 rounded bg-red-500/15 text-red-300 border border-red-500/40">
-                <AlertTriangle className="size-3" /> Support risk
+              <span title={`${ticketsOpen} ticket aperti${badSat ? " · soddisfazione bassa" : ""}`} className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wider px-2 py-0.5 rounded bg-red-500/15 text-red-300 border border-red-500/40">
+                <AlertTriangle className="size-3" /> Rischio supporto
               </span>
             )}
           </h1>
           <p className="text-sm text-muted-foreground flex items-center gap-2"><Mail className="size-3" /> {c.email}</p>
-          <p className="text-sm text-muted-foreground flex items-center gap-2"><MapPin className="size-3" /> {c.city}, {c.country}</p>
-          {c.boat_type && <p className="text-sm text-muted-foreground flex items-center gap-2"><Anchor className="size-3" /> {c.boat_type}</p>}
+          {(c.city || c.country) && (
+            <p className="text-sm text-muted-foreground flex items-center gap-2"><MapPin className="size-3" /> {[c.city, c.country].filter(Boolean).join(", ")}</p>
+          )}
           <div className="flex gap-2 mt-2 flex-wrap">
             {(c.tags ?? []).map((t: string) => (
               <span key={t} className="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded bg-primary/10 text-primary border border-primary/30">{t}</span>
             ))}
           </div>
         </div>
-        <div className="text-right space-y-3">
+        <div className="text-right space-y-2 shrink-0">
+          <p className="text-xs text-muted-foreground uppercase tracking-wider">Valore cliente</p>
+          <p className="text-4xl font-mono font-semibold" style={{ color: "var(--brand-accent)" }}>
+            {formatEuro(Math.round(c.lifetime_value))}
+          </p>
           {data.rfm && (
             <div>
-              <p className="text-xs text-muted-foreground uppercase tracking-wider">Tier</p>
-              <p className="text-xl font-semibold text-primary">{data.rfm.tier}</p>
-              <p className="font-mono text-xs text-muted-foreground">RFM {data.rfm.recency_score}{data.rfm.frequency_score}{data.rfm.monetary_score}</p>
+              <span className={`text-[10px] uppercase tracking-wider font-semibold px-2 py-0.5 rounded-full border ${tierBadgeClass(data.rfm.tier)}`}>
+                {tierIT(data.rfm.tier)}
+              </span>
+              <p className="font-mono text-[11px] text-muted-foreground mt-1">RFM {data.rfm.recency_score}{data.rfm.frequency_score}{data.rfm.monetary_score}</p>
             </div>
           )}
         </div>
       </div>
+
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Stat label="Lifetime value" value={formatEuro(Math.round(c.lifetime_value))} />
