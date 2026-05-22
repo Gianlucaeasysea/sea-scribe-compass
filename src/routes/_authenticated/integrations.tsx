@@ -173,7 +173,7 @@ function Integrations() {
       if (missing.length) {
         throw new Error(`Missing: ${missing.map((m) => m.label).join(", ")}`);
       }
-      await saveCreds({ data: { id, credentials: values } });
+      await saveCreds({ data: { id: id as any, credentials: values } });
       qc.invalidateQueries({ queryKey: ["integrations"] });
       setOpenId(null);
       toast.success("Credentials saved — syncing now…");
