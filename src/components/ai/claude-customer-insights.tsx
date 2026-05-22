@@ -51,11 +51,12 @@ export function ClaudeCustomerInsights({ customer }: { customer: CustomerInput }
         functionName: "analyze-customer",
         body: { customer },
       }),
+    enabled: false, // manual trigger — user runs it via the button below
     staleTime: 1000 * 60 * 60,
     retry: false,
   });
 
-  const refresh = () =>
+  const run = () =>
     fetchAiAnalysis<CustomerAnalysis>({
       cacheKey: `customer:${customer.id}:v1`,
       kind: "customer",
@@ -64,23 +65,39 @@ export function ClaudeCustomerInsights({ customer }: { customer: CustomerInput }
       force: true,
     }).finally(() => refetch());
 
+  const hasResult = !!data;
+
   return (
     <div className="glow-card p-5 space-y-4 border-primary/30">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
-          <Brain className="size-4 text-primary animate-pulse" />
+          <Brain className={`size-4 text-primary ${isFetching ? "animate-pulse" : ""}`} />
           <h3 className="font-semibold">Claude AI insights</h3>
           <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-primary/15 text-primary border border-primary/30">
             powered by Claude
           </span>
         </div>
-        <Button size="sm" variant="ghost" onClick={refresh} disabled={isFetching}>
-          <RefreshCw className={`size-3 mr-1 ${isFetching ? "animate-spin" : ""}`} />
-          Refresh
-        </Button>
+        {hasResult && (
+          <Button size="sm" variant="ghost" onClick={run} disabled={isFetching}>
+            <RefreshCw className={`size-3 mr-1 ${isFetching ? "animate-spin" : ""}`} />
+            Refresh
+          </Button>
+        )}
       </div>
 
-      {isFetching && !data && (
+      {!hasResult && !isFetching && (
+        <div className="py-6 text-center space-y-3">
+          <Sparkles className="size-6 text-primary mx-auto" />
+          <p className="text-xs text-muted-foreground">
+            Generate a tailored AI analysis for this sailor on demand.
+          </p>
+          <Button size="sm" onClick={run} disabled={isFetching}>
+            <Brain className="size-3.5 mr-1.5" /> Run Claude analysis
+          </Button>
+        </div>
+      )}
+
+      {isFetching && (
         <div className="py-8 text-center space-y-2">
           <Sparkles className="size-6 text-primary mx-auto animate-pulse" />
           <p className="text-xs text-muted-foreground">Analyzing customer data…</p>
