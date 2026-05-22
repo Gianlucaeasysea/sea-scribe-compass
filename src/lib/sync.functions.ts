@@ -403,7 +403,7 @@ export const syncFacebook = createServerFn({ method: "POST" })
       for (const ins of insights) {
         const totalSpend = Number(ins.spend ?? 0);
         const perCust = totalSpend / customers.length;
-        for (const c of customers.slice(0, 50)) {
+        for (const c of customers) {
           rows.push({
             customer_id: c.id,
             campaign_name: ins.campaign_name ?? "Unknown",
