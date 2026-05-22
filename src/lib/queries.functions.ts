@@ -160,7 +160,7 @@ export const getCustomerProfile = createServerFn({ method: "GET" })
   .inputValidator((input) => z.object({ id: z.string().uuid() }).parse(input))
   .handler(async ({ context, data }) => {
     const { supabase } = context;
-    const [{ data: customer }, { data: orders }, { data: emails }, { data: fb }, { data: circle }, { data: rfm }, { data: recs }] = await Promise.all([
+    const [{ data: customer }, { data: orders }, { data: emails }, { data: fb }, { data: circle }, { data: rfm }, { data: recs }, { data: tickets }] = await Promise.all([
       supabase.from("customers").select("*").eq("id", data.id).maybeSingle(),
       supabase.from("orders").select("*").eq("customer_id", data.id).order("created_at", { ascending: false }),
       supabase.from("email_events").select("*").eq("customer_id", data.id).order("occurred_at", { ascending: false }).limit(100),
@@ -168,8 +168,9 @@ export const getCustomerProfile = createServerFn({ method: "GET" })
       supabase.from("circle_activity").select("*").eq("customer_id", data.id).maybeSingle(),
       supabase.from("rfm_scores").select("*").eq("customer_id", data.id).maybeSingle(),
       supabase.from("recommendations").select("*").eq("customer_id", data.id).order("confidence", { ascending: false }),
+      supabase.from("zendesk_tickets").select("*").eq("customer_id", data.id).order("created_at", { ascending: false }),
     ]);
-    return { customer, orders: orders ?? [], emails: emails ?? [], fb: fb ?? [], circle, rfm, recs: recs ?? [] };
+    return { customer, orders: orders ?? [], emails: emails ?? [], fb: fb ?? [], circle, rfm, recs: recs ?? [], tickets: tickets ?? [] };
   });
 
 export const getSegments = createServerFn({ method: "GET" })

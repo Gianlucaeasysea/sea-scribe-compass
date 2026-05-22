@@ -2,7 +2,7 @@ import { createFileRoute, useParams, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { getCustomerProfile } from "@/lib/queries.functions";
-import { ArrowLeft, Mail, MapPin, Anchor, MessageCircle, TrendingDown, ShoppingBag } from "lucide-react";
+import { ArrowLeft, Mail, MapPin, Anchor, MessageCircle, TrendingDown, ShoppingBag, LifeBuoy, AlertTriangle } from "lucide-react";
 import { formatDate, formatEuro } from "@/lib/format";
 import { ClaudeCustomerInsights } from "@/components/ai/claude-customer-insights";
 
@@ -25,6 +25,21 @@ function CustomerProfile() {
   const opens = data.emails.filter((e: any) => e.event_type === "opened").length;
   const sent = data.emails.length;
   const openRate = sent ? Math.round((opens / sent) * 100) : 0;
+
+  const tickets = (data as any).tickets ?? [];
+  const solvedStatuses = new Set(["solved", "closed"]);
+  const openStatuses = new Set(["open", "new"]);
+  const ticketsSolved = tickets.filter((t: any) => solvedStatuses.has((t.status ?? "").toLowerCase())).length;
+  const ticketsOpen = tickets.filter((t: any) => openStatuses.has((t.status ?? "").toLowerCase())).length;
+  const badSat = tickets.some((t: any) => (t.satisfaction_rating ?? "").toLowerCase() === "bad");
+  const supportRisk = ticketsOpen >= 2 || badSat;
+  const ticketCountTone =
+    tickets.length === 0
+      ? "bg-emerald-500/15 text-emerald-300 border-emerald-500/40"
+      : tickets.length <= 2
+        ? "bg-amber-500/15 text-amber-300 border-amber-500/40"
+        : "bg-red-500/15 text-red-300 border-red-500/40";
+  const resolutionRate = tickets.length ? Math.round((ticketsSolved / tickets.length) * 100) : 0;
 
   const lastOrderAt = c.last_order_at ? new Date(c.last_order_at) : null;
   const daysSince = lastOrderAt
@@ -65,6 +80,11 @@ function CustomerProfile() {
             {(c.circle_id || (c.tags ?? []).includes("circle-member")) && (
               <span title="Member of Circle community" className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wider px-2 py-0.5 rounded bg-purple-500/15 text-purple-300 border border-purple-500/40">
                 <MessageCircle className="size-3" /> Circle community
+              </span>
+            )}
+            {supportRisk && (
+              <span title={`${ticketsOpen} open ticket(s)${badSat ? " · bad satisfaction" : ""}`} className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wider px-2 py-0.5 rounded bg-red-500/15 text-red-300 border border-red-500/40">
+                <AlertTriangle className="size-3" /> Support risk
               </span>
             )}
           </h1>
@@ -182,6 +202,64 @@ function CustomerProfile() {
             })()}
           </div>
 
+          <div className="glow-card p-5 space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="font-semibold flex items-center gap-2">
+                <LifeBuoy className="size-4 text-primary" /> Support history
+              </h3>
+              <span className={`text-[10px] uppercase tracking-wider px-2 py-0.5 rounded border ${ticketCountTone}`}>
+                {tickets.length} ticket{tickets.length === 1 ? "" : "s"}
+              </span>
+            </div>
+            {tickets.length === 0 ? (
+              <p className="text-xs text-emerald-300">No support tickets — happy customer! ✓</p>
+            ) : (
+              <>
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between text-[11px] text-muted-foreground">
+                    <span>{ticketsSolved} of {tickets.length} resolved</span>
+                    <span className="font-mono">{resolutionRate}%</span>
+                  </div>
+                  <div className="h-1.5 rounded bg-surface-2/60 overflow-hidden">
+                    <div className="h-full bg-emerald-400/70" style={{ width: `${resolutionRate}%` }} />
+                  </div>
+                </div>
+                <div className="space-y-2 max-h-[260px] overflow-auto pr-1">
+                  {tickets.map((t: any) => {
+                    const status = (t.status ?? "").toLowerCase();
+                    const dot = solvedStatuses.has(status)
+                      ? "bg-emerald-400"
+                      : openStatuses.has(status)
+                        ? "bg-red-400"
+                        : "bg-amber-400";
+                    const prio = (t.priority ?? "").toLowerCase();
+                    const sat = (t.satisfaction_rating ?? "").toLowerCase();
+                    return (
+                      <div key={t.id} className="p-2 rounded-md bg-surface-2/40 border border-border">
+                        <div className="flex items-center gap-2">
+                          <span className={`size-2 rounded-full shrink-0 ${dot}`} />
+                          <p className="text-xs flex-1 truncate" title={t.subject ?? ""}>
+                            {(t.subject ?? "(no subject)").slice(0, 60)}
+                          </p>
+                          {(prio === "urgent" || prio === "high") && (
+                            <span className="text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-red-500/15 text-red-300 border border-red-500/40">
+                              {prio}
+                            </span>
+                          )}
+                          {sat === "good" && <span title="Good rating">👍</span>}
+                          {sat === "bad" && <span title="Bad rating">👎</span>}
+                        </div>
+                        <p className="text-[10px] text-muted-foreground mt-1 ml-4">
+                          {relativeDays(t.created_at)} · {t.status ?? "—"}
+                        </p>
+                      </div>
+                    );
+                  })}
+                </div>
+              </>
+            )}
+          </div>
+
 
           <div className="glow-card p-5 space-y-3">
             <h3 className="font-semibold">Next-best actions</h3>
@@ -205,6 +283,18 @@ function CustomerProfile() {
       </div>
     </div>
   );
+}
+
+function relativeDays(iso?: string | null) {
+  if (!iso) return "—";
+  const d = new Date(iso).getTime();
+  if (Number.isNaN(d)) return "—";
+  const days = Math.floor((Date.now() - d) / 86_400_000);
+  if (days <= 0) return "today";
+  if (days === 1) return "yesterday";
+  if (days < 30) return `${days} days ago`;
+  if (days < 365) return `${Math.floor(days / 30)} mo ago`;
+  return `${Math.floor(days / 365)}y ago`;
 }
 
 function Stat({ label, value, icon: Icon, tone }: { label: string; value: any; icon?: any; tone?: "coral" }) {
