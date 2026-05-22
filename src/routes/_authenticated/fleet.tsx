@@ -206,7 +206,7 @@ function Fleet() {
                 </td>
                 <td className="p-3">
                   <span className="text-xs px-2 py-0.5 rounded bg-primary/10 text-primary border border-primary/30">
-                    {c.rfm?.tier ?? "—"}
+                    {tierIT(c.rfm?.tier)}
                   </span>
                 </td>
                 <td className="p-3">
