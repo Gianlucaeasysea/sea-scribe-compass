@@ -168,6 +168,61 @@ async function fetchAllShopifyRecords<T>(initialPath: string, key: string, store
   return { records, blockedStatus: null };
 }
 
+async function upsertShopifyCustomers(customers: any[]) {
+  const customerRows = customers.map((c) => ({
+    shopify_id: String(c.id),
+    email: c.email ?? `${c.id}@unknown.local`,
+    name: [c.first_name, c.last_name].filter(Boolean).join(" ") || c.email || "Cliente",
+    country: c.default_address?.country ?? null,
+    city: c.default_address?.city ?? null,
+    lifetime_value: Number(c.total_spent ?? 0),
+    total_orders: Number(c.orders_count ?? 0),
+    first_order_at: null,
+    last_order_at: c.last_order_id ? c.updated_at : null,
+    tags: c.tags ? String(c.tags).split(",").map((t: string) => t.trim()).filter(Boolean) : [],
+  }));
+
+  if (customerRows.length) {
+    await upsertInBatches("customers", customerRows, "shopify_id");
+  }
+
+  return customerRows;
+}
+
+async function upsertShopifyOrders(orders: any[]) {
+  const customerIds = [...new Set(orders.map((o) => o.customer?.id).filter(Boolean).map(String))];
+  const mapped: { id: string; shopify_id: string }[] = [];
+  for (let i = 0; i < customerIds.length; i += 500) {
+    const { data } = await supabaseAdmin
+      .from("customers")
+      .select("id, shopify_id")
+      .in("shopify_id", customerIds.slice(i, i + 500));
+    mapped.push(...(data ?? []).filter((row): row is { id: string; shopify_id: string } => Boolean(row.shopify_id)));
+  }
+  const idMap = new Map((mapped ?? []).map((m) => [m.shopify_id, m.id]));
+
+  const orderRows = orders
+    .filter((o) => o.customer?.id && idMap.has(String(o.customer.id)))
+    .map((o) => ({
+      shopify_order_id: String(o.id),
+      customer_id: idMap.get(String(o.customer.id))!,
+      total: Number(o.total_price ?? 0),
+      discount_used: Number(o.total_discounts ?? 0) > 0,
+      created_at: o.created_at,
+      line_items: (o.line_items ?? []).map((li: any) => ({
+        name: li.title,
+        quantity: li.quantity,
+        price: Number(li.price ?? 0),
+      })),
+    }));
+
+  if (orderRows.length) {
+    await upsertInBatches("orders", orderRows, "shopify_order_id");
+  }
+
+  return orderRows;
+}
+
 async function upsertInBatches(table: "customers" | "orders", rows: any[], onConflict: string, size = 500) {
   for (let i = 0; i < rows.length; i += size) {
     const batch = rows.slice(i, i + size);
