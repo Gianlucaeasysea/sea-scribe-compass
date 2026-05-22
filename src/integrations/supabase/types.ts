@@ -103,9 +103,12 @@ export type Database = {
       customers: {
         Row: {
           avatar_seed: string | null
+          boat_model: string | null
           boat_type: string | null
           circle_id: string | null
           city: string | null
+          community_join_date: string | null
+          community_lead_status: string | null
           country: string | null
           created_at: string
           email: string
@@ -123,9 +126,12 @@ export type Database = {
         }
         Insert: {
           avatar_seed?: string | null
+          boat_model?: string | null
           boat_type?: string | null
           circle_id?: string | null
           city?: string | null
+          community_join_date?: string | null
+          community_lead_status?: string | null
           country?: string | null
           created_at?: string
           email: string
@@ -143,9 +149,12 @@ export type Database = {
         }
         Update: {
           avatar_seed?: string | null
+          boat_model?: string | null
           boat_type?: string | null
           circle_id?: string | null
           city?: string | null
+          community_join_date?: string | null
+          community_lead_status?: string | null
           country?: string | null
           created_at?: string
           email?: string
