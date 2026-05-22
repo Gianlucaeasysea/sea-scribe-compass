@@ -8,6 +8,7 @@ import {
 } from "@tanstack/react-router";
 import { Toaster } from "@/components/ui/sonner";
 import { GlobalErrorFallback, GlobalNotFoundFallback } from "@/components/error-fallback";
+import { ClientErrorReporter } from "@/components/client-error-reporter";
 
 
 import appCss from "../styles.css?url";
@@ -54,8 +55,10 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
+      <ClientErrorReporter />
       <Outlet />
       <Toaster theme="dark" position="top-right" />
     </QueryClientProvider>
+
   );
 }

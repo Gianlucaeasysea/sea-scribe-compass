@@ -19,6 +19,7 @@ import { Route as AuthenticatedHarborRouteImport } from './routes/_authenticated
 import { Route as AuthenticatedFleetRouteImport } from './routes/_authenticated/fleet'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedAnalyticsRouteImport } from './routes/_authenticated/analytics'
+import { Route as ApiPublicClientErrorRouteImport } from './routes/api/public/client-error'
 import { Route as AuthenticatedCustomerIdRouteImport } from './routes/_authenticated/customer.$id'
 
 const LoginRoute = LoginRouteImport.update({
@@ -71,6 +72,11 @@ const AuthenticatedAnalyticsRoute = AuthenticatedAnalyticsRouteImport.update({
   path: '/analytics',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const ApiPublicClientErrorRoute = ApiPublicClientErrorRouteImport.update({
+  id: '/api/public/client-error',
+  path: '/api/public/client-error',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedCustomerIdRoute = AuthenticatedCustomerIdRouteImport.update({
   id: '/customer/$id',
   path: '/customer/$id',
@@ -88,6 +94,7 @@ export interface FileRoutesByFullPath {
   '/map': typeof AuthenticatedMapRoute
   '/queue': typeof AuthenticatedQueueRoute
   '/customer/$id': typeof AuthenticatedCustomerIdRoute
+  '/api/public/client-error': typeof ApiPublicClientErrorRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -100,6 +107,7 @@ export interface FileRoutesByTo {
   '/map': typeof AuthenticatedMapRoute
   '/queue': typeof AuthenticatedQueueRoute
   '/customer/$id': typeof AuthenticatedCustomerIdRoute
+  '/api/public/client-error': typeof ApiPublicClientErrorRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -114,6 +122,7 @@ export interface FileRoutesById {
   '/_authenticated/map': typeof AuthenticatedMapRoute
   '/_authenticated/queue': typeof AuthenticatedQueueRoute
   '/_authenticated/customer/$id': typeof AuthenticatedCustomerIdRoute
+  '/api/public/client-error': typeof ApiPublicClientErrorRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -128,6 +137,7 @@ export interface FileRouteTypes {
     | '/map'
     | '/queue'
     | '/customer/$id'
+    | '/api/public/client-error'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -140,6 +150,7 @@ export interface FileRouteTypes {
     | '/map'
     | '/queue'
     | '/customer/$id'
+    | '/api/public/client-error'
   id:
     | '__root__'
     | '/'
@@ -153,12 +164,14 @@ export interface FileRouteTypes {
     | '/_authenticated/map'
     | '/_authenticated/queue'
     | '/_authenticated/customer/$id'
+    | '/api/public/client-error'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   LoginRoute: typeof LoginRoute
+  ApiPublicClientErrorRoute: typeof ApiPublicClientErrorRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -233,6 +246,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAnalyticsRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/api/public/client-error': {
+      id: '/api/public/client-error'
+      path: '/api/public/client-error'
+      fullPath: '/api/public/client-error'
+      preLoaderRoute: typeof ApiPublicClientErrorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/customer/$id': {
       id: '/_authenticated/customer/$id'
       path: '/customer/$id'
@@ -273,6 +293,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   LoginRoute: LoginRoute,
+  ApiPublicClientErrorRoute: ApiPublicClientErrorRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
