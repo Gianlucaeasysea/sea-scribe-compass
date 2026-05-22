@@ -15,6 +15,7 @@ async function buildBusinessSnapshot() {
     total_orders: number | null;
     boat_type: string | null;
     country: string | null;
+    circle_id: string | null;
     tags: string[] | null;
     community_join_date: string | null;
     last_order_at: string | null;
@@ -24,7 +25,7 @@ async function buildBusinessSnapshot() {
     const { data, error } = await supabaseAdmin
       .from("customers")
       .select(
-        "lifetime_value, total_orders, boat_type, country, tags, community_join_date, last_order_at",
+        "lifetime_value, total_orders, boat_type, country, circle_id, tags, community_join_date, last_order_at",
       )
       .range(from, from + 999);
     if (error) break;
@@ -115,7 +116,7 @@ async function buildBusinessSnapshot() {
 
   const circleMembers = customers.filter(
     (c) =>
-      (c.tags ?? []).includes("circle-member") || !!c.community_join_date,
+      (c.tags ?? []).includes("circle-member") || !!c.community_join_date || !!c.circle_id,
   ).length;
 
   const ticketStats: Record<string, number> = {};
@@ -207,6 +208,9 @@ export const chatWithClaude = createServerFn({ method: "POST" })
       messages: [firstUser, ack, ...messages],
     };
 
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 45000);
+
     const res = await fetch(ANTHROPIC_URL, {
       method: "POST",
       headers: {
@@ -215,7 +219,13 @@ export const chatWithClaude = createServerFn({ method: "POST" })
         "content-type": "application/json",
       },
       body: JSON.stringify(body),
-    });
+      signal: controller.signal,
+    }).catch((error) => {
+      if (error instanceof Error && error.name === "AbortError") {
+        throw new Error("Claude non ha risposto in tempo. Riprova con una domanda più specifica.");
+      }
+      throw error;
+    }).finally(() => clearTimeout(timeout));
 
     if (!res.ok) {
       const text = await res.text();
