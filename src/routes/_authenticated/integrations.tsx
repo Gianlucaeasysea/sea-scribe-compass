@@ -103,6 +103,7 @@ function Integrations() {
     klaviyo: useServerFn(syncKlaviyo),
     facebook: useServerFn(syncFacebook),
     circle: useServerFn(syncCircle),
+    zendesk: useServerFn(syncZendesk),
   } as const;
 
   const saveCreds = useServerFn(saveIntegrationCredentials);
