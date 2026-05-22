@@ -50,9 +50,15 @@ export function AppShell({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-screen flex bg-background grid-bg">
       <aside className="w-60 border-r border-border bg-surface/40 backdrop-blur flex flex-col">
-        <div className="p-5 flex items-center gap-2 border-b border-border">
-          <Anchor className="size-5 text-primary" />
-          <span className="font-mono text-xs tracking-widest text-foreground">SEAMARKETING</span>
+        <div className="p-5 flex flex-col items-start gap-2 border-b border-border">
+          <img
+            src="https://easysea.org/cdn/shop/files/Logo_Easysea_280x80_nero.png?v=1738336409&width=280"
+            alt="Easysea"
+            className="easysea-logo h-7 w-auto max-w-[140px] object-contain"
+          />
+          <span className="font-mono text-[10px] tracking-[0.2em] uppercase text-muted-foreground">
+            Marketing Intelligence
+          </span>
         </div>
         <nav className="flex-1 p-3 space-y-1">
           {NAV.map((n) => {
