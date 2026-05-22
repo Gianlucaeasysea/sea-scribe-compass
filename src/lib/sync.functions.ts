@@ -5,8 +5,8 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 const DEFAULT_SHOP_DOMAIN = "easysea-design-lab.myshopify.com";
 const SHOPIFY_API_VERSION = "2025-07";
-const SHOPIFY_PAGE_LIMIT = 50;
-const SHOPIFY_MAX_PAGES = 1;
+const SHOPIFY_PAGE_LIMIT = 250;
+const SHOPIFY_MAX_PAGES = 20;
 
 type IntegrationId = "shopify" | "klaviyo" | "facebook" | "circle";
 
