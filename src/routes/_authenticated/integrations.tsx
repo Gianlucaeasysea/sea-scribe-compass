@@ -23,9 +23,10 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { CheckCircle2, Circle, Loader2, RefreshCw } from "lucide-react";
+import { Loader2, RefreshCw, Package } from "lucide-react";
 import { toast } from "sonner";
-import { formatDate, formatNumber } from "@/lib/format";
+import { formatNumber } from "@/lib/format";
+import { relativeTimeIT, translateStatusMessage } from "@/lib/i18n";
 
 export const Route = createFileRoute("/_authenticated/integrations")({
   component: Integrations,
