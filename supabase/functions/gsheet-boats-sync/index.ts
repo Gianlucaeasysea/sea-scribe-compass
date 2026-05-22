@@ -197,16 +197,25 @@ Deno.serve(async (req) => {
       },
       { onConflict: 'id' }
     );
-
-    return new Response(
-      JSON.stringify({ ok: true, message: msg, total: allRows.length, matched: updatedCount, created: unmatchedCount }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
-  } catch (e) {
+   } catch (e) {
     const msg = e instanceof Error ? e.message : 'Unknown error';
-    return new Response(
-      JSON.stringify({ ok: false, error: msg }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    await supabase.from('integrations_status').upsert(
+      { id: 'gsheet_boats', name: 'Google Sheet — Boats', connected: false, status_message: `Error: ${msg}` },
+      { onConflict: 'id' }
     );
-  }
+   }
+  };
+
+  // @ts-ignore - EdgeRuntime is available in Supabase Edge Runtime
+  EdgeRuntime.waitUntil(work());
+
+  await supabase.from('integrations_status').upsert(
+    { id: 'gsheet_boats', name: 'Google Sheet — Boats', connected: true, status_message: 'Sync in progress…', last_sync_at: new Date().toISOString() },
+    { onConflict: 'id' }
+  );
+
+  return new Response(
+    JSON.stringify({ ok: true, message: 'Sync started in background' }),
+    { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+  );
 });
