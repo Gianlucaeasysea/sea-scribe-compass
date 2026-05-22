@@ -103,7 +103,7 @@ export function ClaudeActionsFeed({
                   {a.segment}
                 </span>
                 <span className={`px-1.5 py-0.5 rounded border ${EFFORT_COLOR[a.effort]}`}>
-                  {a.effort} effort
+                  effort {a.effort === "low" ? "basso" : a.effort === "medium" ? "medio" : "alto"}
                 </span>
                 <span className="px-1.5 py-0.5 rounded border border-emerald-500/40 bg-emerald-500/10 text-emerald-300">
                   {a.expected_revenue}
