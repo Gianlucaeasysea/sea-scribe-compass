@@ -304,7 +304,7 @@ export const syncKlaviyo = createServerFn({ method: "POST" })
         "https://a.klaviyo.com/api/events/?page[size]=100&sort=-datetime&include=metric,profile";
       let page = 0;
       while (nextUrl && page < 10) {
-        const res = await fetch(nextUrl, {
+        const res: Response = await fetch(nextUrl, {
           headers: {
             Authorization: `Klaviyo-API-Key ${key}`,
             accept: "application/vnd.api+json",
@@ -312,7 +312,7 @@ export const syncKlaviyo = createServerFn({ method: "POST" })
           },
         });
         if (!res.ok) throw new Error(`Klaviyo ${res.status}: ${await res.text()}`);
-        const json = await res.json();
+        const json: any = await res.json();
         allEvents.push(...(json.data ?? []));
         allIncluded.push(...(json.included ?? []));
         nextUrl = json.links?.next ?? null;
