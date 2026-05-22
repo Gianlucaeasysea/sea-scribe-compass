@@ -544,7 +544,7 @@ export const syncCircle = createServerFn({ method: "POST" })
           };
         });
       if (matchedUpdates.length) {
-        await supabaseAdmin.from("customers").upsert(matchedUpdates, { onConflict: "id" });
+        await (supabaseAdmin.from("customers") as any).upsert(matchedUpdates, { onConflict: "id" });
       }
 
       const rows = allMembers
