@@ -60,11 +60,18 @@ function CustomerProfile() {
           {c.name?.[0] ?? "?"}
         </div>
         <div className="flex-1 space-y-1">
-          <h1 className="text-2xl font-semibold">{c.name}</h1>
+          <h1 className="text-2xl font-semibold flex items-center gap-2">
+            {c.name}
+            {(c.circle_id || (c.tags ?? []).includes("circle-member")) && (
+              <span title="Member of Circle community" className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wider px-2 py-0.5 rounded bg-purple-500/15 text-purple-300 border border-purple-500/40">
+                <MessageCircle className="size-3" /> Circle community
+              </span>
+            )}
+          </h1>
           <p className="text-sm text-muted-foreground flex items-center gap-2"><Mail className="size-3" /> {c.email}</p>
           <p className="text-sm text-muted-foreground flex items-center gap-2"><MapPin className="size-3" /> {c.city}, {c.country}</p>
           {c.boat_type && <p className="text-sm text-muted-foreground flex items-center gap-2"><Anchor className="size-3" /> {c.boat_type}</p>}
-          <div className="flex gap-2 mt-2">
+          <div className="flex gap-2 mt-2 flex-wrap">
             {(c.tags ?? []).map((t: string) => (
               <span key={t} className="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded bg-primary/10 text-primary border border-primary/30">{t}</span>
             ))}
