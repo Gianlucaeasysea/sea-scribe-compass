@@ -458,15 +458,15 @@ export const syncCircle = createServerFn({ method: "POST" })
         }
       }
 
-      const emails = members.map((m) => m.email).filter(Boolean);
+      const emails = allMembers.map((m: any) => m.email).filter(Boolean);
       const { data: existing } = emails.length
         ? await supabaseAdmin.from("customers").select("id, email").in("email", emails)
         : { data: [] as { id: string; email: string }[] };
       const byEmail = new Map((existing ?? []).map((c) => [c.email, c.id]));
 
-      const rows = members
-        .filter((m) => byEmail.has(m.email))
-        .map((m) => ({
+      const rows = allMembers
+        .filter((m: any) => byEmail.has(m.email))
+        .map((m: any) => ({
           customer_id: byEmail.get(m.email)!,
           posts: Number(m.posts_count ?? 0),
           comments: Number(m.comments_count ?? 0),
@@ -482,7 +482,7 @@ export const syncCircle = createServerFn({ method: "POST" })
       if (rows.length) {
         await supabaseAdmin.from("circle_activity").upsert(rows, { onConflict: "customer_id" });
       }
-      const msg = `${members.length} members · ${rows.length} matched`;
+      const msg = `${allMembers.length} members · ${rows.length} matched`;
       await markStatus("circle", "Circle", true, rows.length, msg);
       return { ok: true, message: msg };
     } catch (e) {
