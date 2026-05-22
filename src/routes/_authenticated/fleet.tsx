@@ -183,12 +183,12 @@ function Fleet() {
                     <p className="font-medium flex items-center gap-1.5 flex-wrap">
                       {c.name}
                       {inCommunity(c) && (
-                        <span title="In Circle community" className="inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded bg-purple-500/15 text-purple-300 border border-purple-500/40">
+                        <span title="In community Circle" className="inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded bg-purple-500/15 text-purple-300 border border-purple-500/40">
                           <MessageCircle className="size-2.5" /> Circle
                         </span>
                       )}
                       {inCommunity(c) && isShopify(c) && (
-                        <span title="Matched on Shopify + Circle" className="inline-flex items-center text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-300 border border-emerald-500/40">
+                        <span title="Match Shopify + Circle" className="inline-flex items-center text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-300 border border-emerald-500/40">
                           ✓ Shopify
                         </span>
                       )}
