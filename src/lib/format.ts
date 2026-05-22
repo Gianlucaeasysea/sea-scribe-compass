@@ -8,7 +8,7 @@
  * If you need a different locale, pass it explicitly — but the SAME locale
  * must be used on both sides of the render.
  */
-const LOCALE = "en-US";
+const LOCALE = "it-IT";
 
 const numberFmt = new Intl.NumberFormat(LOCALE);
 const currencyEurFmt = new Intl.NumberFormat(LOCALE, {
