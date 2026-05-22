@@ -180,9 +180,9 @@ function FleetMap() {
             <p className="text-xs text-muted-foreground">{[hovered.city, hovered.country].filter(Boolean).join(", ")}</p>
           )}
           <div className="flex flex-wrap gap-1.5 text-xs">
-            <span className="px-2 py-0.5 rounded bg-primary/15 text-primary border border-primary/30">{hovered.rfm?.tier ?? "Unscored"}</span>
+            <span className="px-2 py-0.5 rounded bg-primary/15 text-primary border border-primary/30">{tierIT(hovered.rfm?.tier ?? "Unscored")}</span>
             <span className="font-mono text-emerald-400">{formatEuro(hovered.lifetime_value)}</span>
-            <span className="font-mono text-muted-foreground">{hovered.total_orders} orders</span>
+            <span className="font-mono text-muted-foreground">{hovered.total_orders} ordini</span>
             {hovered.circle_id && <MessageCircle className="size-3.5 text-violet-400" />}
           </div>
           {(hovered.tags ?? []).length > 0 && (
@@ -192,7 +192,7 @@ function FleetMap() {
               ))}
             </div>
           )}
-          <p className="text-[11px] text-primary inline-flex items-center gap-1">Click row to open <ArrowRight className="size-3" /></p>
+          <p className="text-[11px] text-primary inline-flex items-center gap-1">Clicca per aprire <ArrowRight className="size-3" /></p>
         </div>
       )}
     </div>
