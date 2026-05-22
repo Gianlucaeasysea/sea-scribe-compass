@@ -26,7 +26,7 @@ function Fleet() {
   const [q, setQ] = useState("");
   const [tierFilter, setTierFilter] = useState<string | null>(null);
   const [tagFilter, setTagFilter] = useState<string | null>(null);
-  const [communityFilter, setCommunityFilter] = useState<"all" | "in" | "out">("all");
+  const [communityFilter, setCommunityFilter] = useState<"all" | "in" | "out" | "both" | "circle_only">("all");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [newTag, setNewTag] = useState("");
   const [page, setPage] = useState(1);
