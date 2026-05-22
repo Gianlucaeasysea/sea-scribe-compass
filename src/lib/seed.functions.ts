@@ -301,12 +301,18 @@ export const seedDemoData = createServerFn({ method: "POST" })
     ]);
 
     // Mark integrations as synced (mock)
-    await supabase.from("integrations_status").upsert([
-      { id: "shopify", name: "Shopify", connected: true, last_sync_at: new Date().toISOString(), records_synced: insertedCustomers.length, status_message: "Demo data" },
-      { id: "klaviyo", name: "Klaviyo", connected: true, last_sync_at: new Date().toISOString(), records_synced: emailRows.length, status_message: "Demo data" },
-      { id: "facebook", name: "Facebook Ads", connected: true, last_sync_at: new Date().toISOString(), records_synced: fbRows.length, status_message: "Demo data" },
-      { id: "circle", name: "Circle", connected: true, last_sync_at: new Date().toISOString(), records_synced: circleRows.length, status_message: "Demo data" },
-    ]);
+    const integUpdates = [
+      { id: "shopify", records: insertedCustomers.length },
+      { id: "klaviyo", records: emailRows.length },
+      { id: "facebook", records: fbRows.length },
+      { id: "circle", records: circleRows.length },
+    ];
+    for (const u of integUpdates) {
+      await supabase
+        .from("integrations_status")
+        .update({ connected: true, last_sync_at: new Date().toISOString(), records_synced: u.records, status_message: "Demo data" })
+        .eq("id", u.id);
+    }
 
     return {
       ok: true,
