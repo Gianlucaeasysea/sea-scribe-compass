@@ -41,11 +41,13 @@ const RISKY_PATTERNS = [
   { re: /Math\.random\(/g,              why: "non-deterministic — compute server-side or in useEffect" },
   { re: /Date\.now\(/g,                 why: "non-deterministic — compute in useEffect" },
 ];
-// Files allowed to use these (event handlers, hooks, server-only modules).
+// Files allowed to use these (event handlers, hooks, server-only modules,
+// or vendored shadcn primitives whose risky calls run only in client effects).
 const ALLOWED_FILES = new Set([
   "src/components/client-error-reporter.tsx",
   "src/lib/format.ts",
 ]);
+const ALLOWED_DIRS = ["src/components/ui/"]; // shadcn primitives — vendored
 
 function* walk(dir) {
   for (const name of readdirSync(dir)) {
