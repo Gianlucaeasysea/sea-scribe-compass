@@ -7,7 +7,7 @@ const DEFAULT_SHOP_DOMAIN = "easysea-design-lab.myshopify.com";
 const SHOPIFY_API_VERSION = "2025-07";
 const SHOPIFY_PAGE_LIMIT = 250;
 
-type IntegrationId = "shopify" | "klaviyo" | "facebook" | "circle";
+type IntegrationId = "shopify" | "klaviyo" | "facebook" | "circle" | "zendesk";
 
 async function loadCredentials(id: IntegrationId): Promise<Record<string, string>> {
   const { data } = await (supabaseAdmin as any)
