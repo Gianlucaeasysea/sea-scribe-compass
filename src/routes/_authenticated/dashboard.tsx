@@ -255,8 +255,19 @@ function Dashboard() {
   );
 }
 
-function Kpi({ label, value, icon: Icon, hint, tone }: { label: string; value: any; icon: any; hint: string; tone?: "amber" | "coral" }) {
+function Kpi({ label, value, icon: Icon, hint, tone, trend, spark }: { label: string; value: any; icon: any; hint: string; tone?: "amber" | "coral"; trend?: number; spark?: number[] }) {
   const color = tone === "amber" ? "text-amber-400" : tone === "coral" ? "text-orange-400" : "text-primary";
+  // Deterministic decorative sparkline derived from the label so SSR/CSR match.
+  const points = spark ?? (() => {
+    const seed = [...label].reduce((s, c) => s + c.charCodeAt(0), 0);
+    return Array.from({ length: 12 }, (_, i) => 0.3 + 0.5 * Math.abs(Math.sin(seed * 0.13 + i * 0.7)));
+  })();
+  const max = Math.max(...points, 0.01);
+  const path = points
+    .map((p, i) => `${i === 0 ? "M" : "L"} ${(i / (points.length - 1)) * 100} ${30 - (p / max) * 26}`)
+    .join(" ");
+  const arrow = trend == null ? null : trend >= 0 ? "▲" : "▼";
+  const trendColor = trend == null ? "" : trend >= 0 ? "text-emerald-400" : "text-orange-400";
   return (
     <div className="glow-card p-5 space-y-2 hover:translate-y-[-2px] transition-transform">
       <div className="flex items-center justify-between">
@@ -264,7 +275,18 @@ function Kpi({ label, value, icon: Icon, hint, tone }: { label: string; value: a
         <Icon className={`size-4 ${color}`} />
       </div>
       <p className={`text-3xl font-mono ${color}`}>{value}</p>
-      <p className="text-xs text-muted-foreground">{hint}</p>
+      <div className="flex items-end justify-between gap-2">
+        <p className="text-xs text-muted-foreground">{hint}</p>
+        <svg viewBox="0 0 100 30" preserveAspectRatio="none" className="w-20 h-7 opacity-70">
+          <path d={path} fill="none" stroke="currentColor" strokeWidth="1.5" className={color} />
+        </svg>
+      </div>
+      {arrow && (
+        <p className={`text-[11px] font-mono ${trendColor}`}>
+          {arrow} {Math.abs(trend!).toFixed(0)}% vs mese scorso
+        </p>
+      )}
     </div>
   );
 }
+
