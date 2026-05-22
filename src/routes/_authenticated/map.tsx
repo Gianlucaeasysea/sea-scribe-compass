@@ -214,7 +214,7 @@ function RfmScatter({
   const PAD = { l: 56, r: 16, t: 12, b: 36 };
 
   const points = useMemo(() => {
-    const now = Date.now();
+    const now = nowMs();
     return customers
       .map((c) => {
         const last = c.last_order_at ? new Date(c.last_order_at).getTime() : null;
