@@ -141,12 +141,12 @@ function getNextShopifyPath(linkHeader: string | null) {
   return `${url.pathname.split(`/admin/api/${SHOPIFY_API_VERSION}/`)[1]}${url.search}`;
 }
 
-async function fetchAllShopifyRecords<T>(initialPath: string, key: string): Promise<{ records: T[]; blockedStatus: number | null; capped: boolean }> {
+async function fetchAllShopifyRecords<T>(initialPath: string, key: string, stored?: Record<string, string>): Promise<{ records: T[]; blockedStatus: number | null; capped: boolean }> {
   const records: T[] = [];
   let nextPath: string | null = initialPath;
   let pages = 0;
   while (nextPath && pages < SHOPIFY_MAX_PAGES) {
-    const result = await shopifyFetch(nextPath);
+    const result = await shopifyFetch(nextPath, stored);
     if (result.json === null) return { records, blockedStatus: result.status, capped: false };
     records.push(...((result.json[key] ?? []) as T[]));
     nextPath = getNextShopifyPath(result.link);
