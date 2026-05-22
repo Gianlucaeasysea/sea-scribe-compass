@@ -53,16 +53,20 @@ async function shopifyFetch(path: string): Promise<ShopifyResult> {
   let authFailureStatus: number | null = null;
   for (const token of tokens) {
     let res: Response | null = null;
-    for (let attempt = 0; attempt < 2; attempt += 1) {
+    for (let attempt = 0; attempt < 5; attempt += 1) {
       res = await fetch(`https://${SHOP_DOMAIN}/admin/api/${SHOPIFY_API_VERSION}/${path}`, {
         headers: { "X-Shopify-Access-Token": token.value, "Content-Type": "application/json" },
         signal: AbortSignal.timeout(8_000),
       });
       if (res.status !== 429) break;
-      const retryAfter = Number(res.headers.get("retry-after") ?? "1");
-      await sleep(Math.max(retryAfter, 1) * 1000);
+      const retryAfter = Number(res.headers.get("retry-after") ?? "2");
+      await sleep(Math.max(retryAfter, 1) * 1000 + attempt * 500);
     }
     if (!res) continue;
+    if (res.status === 429) {
+      // Rate limited even after retries — treat as soft-blocked, don't fail the whole sync
+      return { json: null, link: null, status: 429 };
+    }
     if (res.status === 401 || res.status === 403) {
       authFailureStatus = res.status;
       continue;
@@ -75,6 +79,7 @@ async function shopifyFetch(path: string): Promise<ShopifyResult> {
 
   return { json: null, link: null, status: authFailureStatus ?? 401 };
 }
+
 
 function getNextShopifyPath(linkHeader: string | null) {
   const nextLink = linkHeader?.split(",").find((part) => part.includes('rel="next"'));
@@ -131,10 +136,11 @@ export const syncShopify = createServerFn({ method: "POST" })
       const productCount: number | null = productsProbe.json?.count ?? null;
 
       // 3. Clienti e ordini — se bloccati da scope, non far fallire tutto.
-      const [customersResult, ordersResult] = await Promise.all([
-        fetchAllShopifyRecords<any>(`customers.json?limit=${SHOPIFY_PAGE_LIMIT}`, "customers"),
-        fetchAllShopifyRecords<any>(`orders.json?status=any&limit=${SHOPIFY_PAGE_LIMIT}`, "orders"),
-      ]);
+      // Sequenziale + delay per rispettare il limite 2 req/sec di Shopify
+      const customersResult = await fetchAllShopifyRecords<any>(`customers.json?limit=${SHOPIFY_PAGE_LIMIT}`, "customers");
+      await sleep(600);
+      const ordersResult = await fetchAllShopifyRecords<any>(`orders.json?status=any&limit=${SHOPIFY_PAGE_LIMIT}`, "orders");
+
       
       let customers = customersResult.records;
       const customersBlocked = customersResult.blockedStatus !== null;
