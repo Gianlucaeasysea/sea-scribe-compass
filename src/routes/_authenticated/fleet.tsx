@@ -74,11 +74,11 @@ function Fleet() {
       if (r.klaviyoOnly) unmatched.push(`${r.klaviyoOnly} Klaviyo`);
       if (r.circleOnly) unmatched.push(`${r.circleOnly} Circle`);
       toast.success(
-        `Unified ${r.shopify} Shopify · ${r.klaviyoMatched} Klaviyo · ${r.circleMatched} Circle · ${r.facebookMatched} Facebook`,
+        `Unificati ${r.shopify} Shopify · ${r.klaviyoMatched} Klaviyo · ${r.circleMatched} Circle · ${r.facebookMatched} Facebook`,
         {
           description: unmatched.length
-            ? `No Shopify match for: ${unmatched.join(", ")}`
-            : "Every connector profile matched a Shopify customer.",
+            ? `Nessun match Shopify per: ${unmatched.join(", ")}`
+            : "Ogni profilo dei connettori ha trovato corrispondenza in Shopify.",
         },
       );
       qc.invalidateQueries({ queryKey: ["map"] });
@@ -90,7 +90,7 @@ function Fleet() {
   const tagMut = useMutation({
     mutationFn: (vars: { id: string; tags: string[] }) => updateTags({ data: vars }),
     onSuccess: () => {
-      toast.success("Tags updated");
+      toast.success("Tag aggiornati");
       qc.invalidateQueries({ queryKey: ["map"] });
     },
     onError: (e: any) => toast.error(e.message),
