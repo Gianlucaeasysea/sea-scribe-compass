@@ -79,24 +79,52 @@ export const getDashboardData = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { supabase } = context;
-    const [customersCnt, rfmRows, recs, orders, actions, integ] = await Promise.all([
+    const [customersCnt, recs, orders, actions, integ] = await Promise.all([
       supabase.from("customers").select("*", { count: "exact", head: true }),
-      supabase.from("rfm_scores").select("*"),
       supabase.from("recommendations").select("*").eq("status", "pending").limit(10).order("confidence", { ascending: false }),
       supabase.from("orders").select("total, created_at, customer_id").order("created_at", { ascending: false }).limit(20),
       supabase.from("marketing_actions").select("*"),
       supabase.from("integrations_status").select("*"),
     ]);
+
+    // Paginate rfm_scores (default cap is 1000)
+    const rfm: { tier: string }[] = [];
+    for (let from = 0; ; from += 1000) {
+      const { data, error } = await supabase
+        .from("rfm_scores")
+        .select("tier")
+        .range(from, from + 999);
+      if (error) break;
+      if (!data || data.length === 0) break;
+      rfm.push(...data);
+      if (data.length < 1000) break;
+    }
+
     const totalCustomers = customersCnt.count ?? 0;
-    const rfm = rfmRows.data ?? [];
-    const atRisk = rfm.filter((r) => r.tier === "At Risk" || r.tier === "Lost").length;
-    const champion = rfm.filter((r) => r.tier === "Champion").length;
+    const atRisk = rfm.filter((r) => r.tier === "At Risk").length;
+    const champion = rfm.filter((r) => r.tier === "Champion" || r.tier === "Loyal").length;
     const allActions = actions.data ?? [];
     const opportunity = allActions.reduce((s, a) => s + Number(a.expected_revenue || 0), 0);
 
-    const { data: customersForLtv } = await supabase.from("customers").select("lifetime_value");
-    const ltvSum = (customersForLtv ?? []).reduce((s, c) => s + Number(c.lifetime_value || 0), 0);
-    const avgLtv = totalCustomers > 0 ? Math.round(ltvSum / totalCustomers) : 0;
+    // Paginate customers for accurate LTV aggregates
+    let ltvSum = 0;
+    let payingCount = 0;
+    for (let from = 0; ; from += 1000) {
+      const { data, error } = await supabase
+        .from("customers")
+        .select("lifetime_value")
+        .range(from, from + 999);
+      if (error) break;
+      if (!data || data.length === 0) break;
+      for (const c of data) {
+        const v = Number(c.lifetime_value || 0);
+        ltvSum += v;
+        if (v > 0) payingCount += 1;
+      }
+      if (data.length < 1000) break;
+    }
+    const avgLtv = payingCount > 0 ? Math.round(ltvSum / payingCount) : 0;
+    const totalRevenue = Math.round(ltvSum);
 
     // segment buckets
     const tierCounts: Record<string, number> = {};
@@ -110,6 +138,8 @@ export const getDashboardData = createServerFn({ method: "GET" })
         champion,
         opportunity,
         pendingActions: allActions.filter((a) => a.status === "todo").length,
+        totalRevenue,
+        payingCustomers: payingCount,
       },
       tierCounts,
       topRecs: recs.data ?? [],

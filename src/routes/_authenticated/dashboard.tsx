@@ -155,9 +155,9 @@ function Dashboard() {
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <Kpi label="Clienti totali" numericValue={data?.kpi.totalCustomers ?? 0} icon={Users} hint="diportisti" />
-        <Kpi label="Valore medio" numericValue={data?.kpi.avgLtv ?? 0} prefix="€" icon={DollarSign} hint="per cliente" />
-        <Kpi label="Clienti top" numericValue={data?.kpi.champion ?? 0} icon={Crown} hint="campioni" tone="amber" />
-        <Kpi label="A rischio abbandono" numericValue={data?.kpi.atRisk ?? 0} icon={AlertTriangle} hint="richiedono attenzione" tone="coral" />
+        <Kpi label="Valore medio" numericValue={data?.kpi.avgLtv ?? 0} prefix="€" icon={DollarSign} hint="per cliente pagante" />
+        <Kpi label="Clienti top" numericValue={data?.kpi.champion ?? 0} icon={Crown} hint="champion + loyali" tone="amber" />
+        <Kpi label="A rischio abbandono" numericValue={data?.kpi.atRisk ?? 0} icon={AlertTriangle} hint="riattivazione urgente" tone="coral" />
       </div>
 
 
