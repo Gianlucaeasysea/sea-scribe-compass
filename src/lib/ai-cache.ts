@@ -11,7 +11,7 @@ export async function fetchAiAnalysis<T = unknown>(opts: {
   cacheKey: string;
   kind: "customer" | "segment" | "dashboard";
   functionName: "analyze-customer" | "analyze-segment" | "generate-actions";
-  body: unknown;
+  body: Record<string, unknown>;
   force?: boolean;
 }): Promise<T> {
   if (!opts.force) {
