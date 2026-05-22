@@ -65,7 +65,7 @@ function Fleet() {
                 <td className="p-3 text-right font-mono">€{Math.round(c.lifetime_value)}</td>
                 <td className="p-3 text-right font-mono text-muted-foreground">{c.total_orders}</td>
                 <td className="p-3 text-right text-xs text-muted-foreground">
-                  {c.last_order_at ? new Date(c.last_order_at).toLocaleDateString() : "—"}
+                  {formatDate(c.last_order_at)}
                 </td>
               </tr>
             ))}
