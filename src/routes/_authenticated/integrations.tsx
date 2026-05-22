@@ -39,7 +39,7 @@ const META: Record<IntegrationId, { color: string; desc: string }> = {
   facebook: { color: "#1877F2", desc: "Ad spend, audiences, conversions" },
   circle: { color: "#9333EA", desc: "Community posts & engagement" },
   zendesk: { color: "#03363D", desc: "Support tickets & satisfaction" },
-  gsheet_boats: { color: "#0F9D58", desc: "Community boat details — type, model, lead status" },
+  gsheet_boats: { color: "#0F9D58", desc: "Community boat details — type, model, lead status. Sheet must be shared publicly (view only) for sync to work." },
 };
 
 type FieldDef = { key: string; label: string; placeholder?: string; type?: string; defaultValue?: string };
