@@ -3,10 +3,10 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-
-
-
 const SHOP_DOMAIN = "easysea-design-lab.myshopify.com";
+const SHOPIFY_API_VERSION = "2025-07";
+const SHOPIFY_PAGE_LIMIT = 100;
+const SHOPIFY_MAX_PAGES = 2;
 
 async function markStatus(
   id: string,
@@ -37,26 +37,43 @@ function sleep(ms: number) {
 
 type ShopifyResult = { json: any; link: string | null; status: number };
 
+function getShopifyTokens() {
+  const tokens = [
+    { name: "SHOPIFY_ACCESS_TOKEN", value: process.env.SHOPIFY_ACCESS_TOKEN },
+    { name: "SHOPIFY_CUSTOM_ADMIN_TOKEN", value: process.env.SHOPIFY_CUSTOM_ADMIN_TOKEN },
+  ].filter((item): item is { name: string; value: string } => Boolean(item.value));
+
+  return tokens.filter((token, index, all) => all.findIndex((item) => item.value === token.value) === index);
+}
+
 async function shopifyFetch(path: string): Promise<ShopifyResult> {
-  const token = process.env.SHOPIFY_CUSTOM_ADMIN_TOKEN || process.env.SHOPIFY_ACCESS_TOKEN;
-  if (!token) throw new Error("SHOPIFY_CUSTOM_ADMIN_TOKEN or SHOPIFY_ACCESS_TOKEN not configured");
-  let res: Response | null = null;
-  for (let attempt = 0; attempt < 3; attempt += 1) {
-    res = await fetch(`https://${SHOP_DOMAIN}/admin/api/2025-07/${path}`, {
-      headers: { "X-Shopify-Access-Token": token, "Content-Type": "application/json" },
-    });
-    if (res.status !== 429) break;
-    const retryAfter = Number(res.headers.get("retry-after") ?? "1");
-    await sleep(Math.max(retryAfter, 1) * 1000);
+  const tokens = getShopifyTokens();
+  if (!tokens.length) throw new Error("SHOPIFY_ACCESS_TOKEN or SHOPIFY_CUSTOM_ADMIN_TOKEN not configured");
+
+  let authFailureStatus: number | null = null;
+  for (const token of tokens) {
+    let res: Response | null = null;
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      res = await fetch(`https://${SHOP_DOMAIN}/admin/api/${SHOPIFY_API_VERSION}/${path}`, {
+        headers: { "X-Shopify-Access-Token": token.value, "Content-Type": "application/json" },
+        signal: AbortSignal.timeout(12_000),
+      });
+      if (res.status !== 429) break;
+      const retryAfter = Number(res.headers.get("retry-after") ?? "1");
+      await sleep(Math.max(retryAfter, 1) * 1000);
+    }
+    if (!res) continue;
+    if (res.status === 401 || res.status === 403) {
+      authFailureStatus = res.status;
+      continue;
+    }
+    if (!res.ok) {
+      throw new Error(`Shopify ${path}: ${res.status} ${await res.text()}`);
+    }
+    return { json: await res.json(), link: res.headers.get("link"), status: res.status };
   }
-  if (!res) throw new Error(`Shopify ${path}: no response`);
-  if (res.status === 401 || res.status === 403) {
-    return { json: null, link: null, status: res.status };
-  }
-  if (!res.ok) {
-    throw new Error(`Shopify ${path}: ${res.status} ${await res.text()}`);
-  }
-  return { json: await res.json(), link: res.headers.get("link"), status: res.status };
+
+  return { json: null, link: null, status: authFailureStatus ?? 401 };
 }
 
 function getNextShopifyPath(linkHeader: string | null) {
@@ -64,19 +81,21 @@ function getNextShopifyPath(linkHeader: string | null) {
   const match = nextLink?.match(/<([^>]+)>/);
   if (!match) return null;
   const url = new URL(match[1]);
-  return `${url.pathname.split("/admin/api/2025-07/")[1]}${url.search}`;
+  return `${url.pathname.split(`/admin/api/${SHOPIFY_API_VERSION}/`)[1]}${url.search}`;
 }
 
-async function fetchAllShopifyRecords<T>(initialPath: string, key: string): Promise<{ records: T[]; blockedStatus: number | null }> {
+async function fetchAllShopifyRecords<T>(initialPath: string, key: string): Promise<{ records: T[]; blockedStatus: number | null; capped: boolean }> {
   const records: T[] = [];
   let nextPath: string | null = initialPath;
-  while (nextPath) {
+  let pages = 0;
+  while (nextPath && pages < SHOPIFY_MAX_PAGES) {
     const result = await shopifyFetch(nextPath);
-    if (result.json === null) return { records, blockedStatus: result.status };
+    if (result.json === null) return { records, blockedStatus: result.status, capped: false };
     records.push(...((result.json[key] ?? []) as T[]));
     nextPath = getNextShopifyPath(result.link);
+    pages += 1;
   }
-  return { records, blockedStatus: null };
+  return { records, blockedStatus: null, capped: Boolean(nextPath) };
 }
 
 async function upsertInBatches(table: "customers" | "orders", rows: any[], onConflict: string, size = 500) {
