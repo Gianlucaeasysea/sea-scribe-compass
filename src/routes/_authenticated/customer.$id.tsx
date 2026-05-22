@@ -285,6 +285,18 @@ function CustomerProfile() {
   );
 }
 
+function relativeDays(iso?: string | null) {
+  if (!iso) return "—";
+  const d = new Date(iso).getTime();
+  if (Number.isNaN(d)) return "—";
+  const days = Math.floor((Date.now() - d) / 86_400_000);
+  if (days <= 0) return "today";
+  if (days === 1) return "yesterday";
+  if (days < 30) return `${days} days ago`;
+  if (days < 365) return `${Math.floor(days / 30)} mo ago`;
+  return `${Math.floor(days / 365)}y ago`;
+}
+
 function Stat({ label, value, icon: Icon, tone }: { label: string; value: any; icon?: any; tone?: "coral" }) {
   const color = tone === "coral" ? "text-orange-400" : "text-foreground";
   return (
