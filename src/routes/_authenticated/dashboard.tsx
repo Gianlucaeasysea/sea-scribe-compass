@@ -153,11 +153,12 @@ function Dashboard() {
       )}
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <Kpi label="Clienti totali" value={data?.kpi.totalCustomers ?? 0} icon={Users} hint="diportisti" />
-        <Kpi label="Valore medio" value={`€${data?.kpi.avgLtv ?? 0}`} icon={DollarSign} hint="per cliente" />
-        <Kpi label="Clienti top" value={data?.kpi.champion ?? 0} icon={Crown} hint="campioni" tone="amber" />
-        <Kpi label="A rischio abbandono" value={data?.kpi.atRisk ?? 0} icon={AlertTriangle} hint="richiedono attenzione" tone="coral" />
+        <Kpi label="Clienti totali" numericValue={data?.kpi.totalCustomers ?? 0} icon={Users} hint="diportisti" />
+        <Kpi label="Valore medio" numericValue={data?.kpi.avgLtv ?? 0} prefix="€" icon={DollarSign} hint="per cliente" />
+        <Kpi label="Clienti top" numericValue={data?.kpi.champion ?? 0} icon={Crown} hint="campioni" tone="amber" />
+        <Kpi label="A rischio abbandono" numericValue={data?.kpi.atRisk ?? 0} icon={AlertTriangle} hint="richiedono attenzione" tone="coral" />
       </div>
+
 
       <div className="grid lg:grid-cols-3 gap-6">
         <div className="glow-card p-6 lg:col-span-2 space-y-4">
