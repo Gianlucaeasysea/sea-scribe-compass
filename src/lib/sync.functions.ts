@@ -170,10 +170,18 @@ export const syncShopify = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async () => {
     try {
+      const stored = await loadCredentials("shopify");
+      const hasToken = Boolean(stored.access_token || process.env.SHOPIFY_ACCESS_TOKEN || process.env.SHOPIFY_CUSTOM_ADMIN_TOKEN);
+      if (!hasToken) {
+        const msg = "Shopify API token not configured. Click Connect to add your credentials.";
+        await markStatus("shopify", "Shopify", false, 0, msg);
+        return { ok: false, message: msg };
+      }
+
       // 1. Verifica connessione: shop.json richiede solo accesso base.
-      const shopProbe = await shopifyFetch("shop.json");
+      const shopProbe = await shopifyFetch("shop.json", stored);
       if (shopProbe.status === 401) {
-        const msg = "Token Shopify non valido o scaduto (401). Controlla SHOPIFY_CUSTOM_ADMIN_TOKEN.";
+        const msg = "Token Shopify non valido o scaduto (401). Aggiorna le credenziali.";
         await markStatus("shopify", "Shopify", false, 0, msg);
         return { ok: false, message: msg };
       }
@@ -184,14 +192,14 @@ export const syncShopify = createServerFn({ method: "POST" })
       }
 
       // 2. Conteggio prodotti (read_products è di solito concesso).
-      const productsProbe = await shopifyFetch("products/count.json");
+      const productsProbe = await shopifyFetch("products/count.json", stored);
       const productCount: number | null = productsProbe.json?.count ?? null;
 
       // 3. Clienti e ordini — se bloccati da scope, non far fallire tutto.
       // Sequenziale + delay per rispettare il limite 2 req/sec di Shopify
-      const customersResult = await fetchAllShopifyRecords<any>(`customers.json?limit=${SHOPIFY_PAGE_LIMIT}`, "customers");
+      const customersResult = await fetchAllShopifyRecords<any>(`customers.json?limit=${SHOPIFY_PAGE_LIMIT}`, "customers", stored);
       await sleep(600);
-      const ordersResult = await fetchAllShopifyRecords<any>(`orders.json?status=any&limit=${SHOPIFY_PAGE_LIMIT}`, "orders");
+      const ordersResult = await fetchAllShopifyRecords<any>(`orders.json?status=any&limit=${SHOPIFY_PAGE_LIMIT}`, "orders", stored);
 
       
       let customers = customersResult.records;
