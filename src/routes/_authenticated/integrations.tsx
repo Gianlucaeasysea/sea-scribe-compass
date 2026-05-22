@@ -5,6 +5,7 @@ import { getIntegrations } from "@/lib/queries.functions";
 import { Button } from "@/components/ui/button";
 import { CheckCircle2, Circle } from "lucide-react";
 import { toast } from "sonner";
+import { formatDate, formatNumber } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/integrations")({
   component: Integrations,
