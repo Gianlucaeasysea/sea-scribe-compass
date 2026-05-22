@@ -116,7 +116,12 @@ function normalize(html) {
     .replace(/data-vite-dev-id="[^"]*"/g, "")
     .replace(/\?t=\d+/g, "")
     .replace(/<!--\$\?-->|<!--\/\$-->/g, "")
-    .replace(/nonce="[^"]*"/g, "");
+    .replace(/nonce="[^"]*"/g, "")
+    // TanStack Router serializes per-match updatedAt (e.g. u:1779446713248)
+    // — internal cache key, never reaches the DOM.
+    .replace(/u:\d{10,}/g, "u:T")
+    // Any other long epoch-like number embedded in script payloads.
+    .replace(/\b1\d{12}\b/g, "T");
 }
 
 function diffSnippet(a, b) {
