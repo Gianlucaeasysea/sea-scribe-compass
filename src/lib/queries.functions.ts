@@ -215,17 +215,19 @@ export const getAnalytics = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { supabase } = context;
-    const [{ data: orders }, { data: rfm }, { data: customers }, { data: fb }] = await Promise.all([
+    const [{ data: orders }, { data: rfm }, { data: customers }, { data: fb }, { data: tickets }] = await Promise.all([
       supabase.from("orders").select("total, created_at, line_items, customer_id, discount_used"),
       supabase.from("rfm_scores").select("churn_risk, tier"),
-      supabase.from("customers").select("id, country, boat_type, lifetime_value, first_order_at, total_orders"),
+      supabase.from("customers").select("id, country, boat_type, lifetime_value, first_order_at, total_orders, name"),
       supabase.from("fb_ad_events").select("campaign_name, spend, event_type"),
+      supabase.from("zendesk_tickets").select("*, customer_id"),
     ]);
     return {
       orders: orders ?? [],
       rfm: rfm ?? [],
       customers: customers ?? [],
       fb: fb ?? [],
+      tickets: tickets ?? [],
     };
   });
 
