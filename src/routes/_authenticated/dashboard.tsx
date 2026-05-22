@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { formatEuro } from "@/lib/format";
 import { tierIT } from "@/lib/i18n";
 import { ClaudeActionsFeed } from "@/components/ai/claude-actions-feed";
+import { CountUp } from "@/components/ui/count-up";
 import { useState } from "react";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
