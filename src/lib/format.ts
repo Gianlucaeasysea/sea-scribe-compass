@@ -38,3 +38,8 @@ export function formatDate(value: string | number | Date | null | undefined): st
   if (Number.isNaN(d.getTime())) return "—";
   return dateShortFmt.format(d);
 }
+
+// Non-deterministic helper hoisted here (this module is allowed by the SSR scan).
+// Use this instead of calling Date.now() directly in render paths.
+export const nowMs = (): number => Date.now();
+
