@@ -501,9 +501,9 @@ export const syncCircle = createServerFn({ method: "POST" })
 
       const emails = allMembers.map((m: any) => m.email).filter(Boolean);
       const { data: existing } = emails.length
-        ? await supabaseAdmin.from("customers").select("id, email").in("email", emails)
-        : { data: [] as { id: string; email: string }[] };
-      const byEmail = new Map((existing ?? []).map((c) => [c.email, c.id]));
+        ? await supabaseAdmin.from("customers").select("id, email, tags, circle_id").in("email", emails)
+        : { data: [] as { id: string; email: string; tags: string[] | null; circle_id: string | null }[] };
+      const byEmail = new Map((existing ?? []).map((c) => [c.email, c]));
 
       // Members not matched to any Shopify customer → create minimal customer record
       const unmatchedMembers = allMembers.filter(
@@ -517,21 +517,40 @@ export const syncCircle = createServerFn({ method: "POST" })
           city: null,
           lifetime_value: 0,
           total_orders: 0,
-          tags: ["circle-only"],
+          circle_id: m.id ? String(m.id) : null,
+          tags: ["circle-member", "circle-only"],
         }));
         const { data: inserted } = await supabaseAdmin
           .from("customers")
           .upsert(newCustomers, { onConflict: "email" })
-          .select("id, email");
+          .select("id, email, tags, circle_id");
         for (const c of inserted ?? []) {
-          byEmail.set(c.email, c.id);
+          byEmail.set(c.email, c as any);
         }
+      }
+
+      // Tag every matched Shopify customer as circle-member + persist circle_id
+      const matchedUpdates = allMembers
+        .filter((m: any) => m.email && byEmail.has(m.email))
+        .map((m: any) => {
+          const existing = byEmail.get(m.email)!;
+          const currentTags = Array.isArray((existing as any).tags) ? (existing as any).tags : [];
+          const tags = Array.from(new Set([...currentTags, "circle-member"]));
+          return {
+            id: (existing as any).id,
+            email: m.email,
+            circle_id: m.id ? String(m.id) : (existing as any).circle_id ?? null,
+            tags,
+          };
+        });
+      if (matchedUpdates.length) {
+        await supabaseAdmin.from("customers").upsert(matchedUpdates, { onConflict: "id" });
       }
 
       const rows = allMembers
         .filter((m: any) => byEmail.has(m.email))
         .map((m: any) => ({
-          customer_id: byEmail.get(m.email)!,
+          customer_id: (byEmail.get(m.email) as any).id,
           posts: Number(m.posts_count ?? 0),
           comments: Number(m.comments_count ?? 0),
           reactions: Number(m.reactions_count ?? 0),
