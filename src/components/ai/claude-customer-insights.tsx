@@ -157,14 +157,14 @@ export function ClaudeCustomerInsights({ customer }: { customer: CustomerInput }
             <div className="flex items-start gap-2 text-xs">
               <Mail className="size-3 mt-0.5 text-primary" />
               <div>
-                <p className="text-muted-foreground">Subject line</p>
+                <p className="text-muted-foreground">Oggetto email</p>
                 <p className="font-medium">{data.suggested_subject_line}</p>
               </div>
             </div>
             <div className="flex items-start gap-2 text-xs">
               <Clock className="size-3 mt-0.5 text-primary" />
               <div>
-                <p className="text-muted-foreground">Best timing</p>
+                <p className="text-muted-foreground">Timing migliore</p>
                 <p>{data.best_timing}</p>
               </div>
             </div>
