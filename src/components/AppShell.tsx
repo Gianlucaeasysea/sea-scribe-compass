@@ -1,7 +1,7 @@
 import { Link, useLocation, useNavigate } from "@tanstack/react-router";
 import { useAuth } from "@/hooks/use-auth";
 import {
-  LayoutDashboard, Users, Globe, Anchor, Zap, BarChart2, Plug, LogOut, Search,
+  LayoutDashboard, Users, Globe, Anchor, Zap, BarChart2, Plug, LogOut, Search, Brain,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
@@ -20,6 +20,7 @@ const NAV = [
   { to: "/harbor",       label: "Segmenti",    icon: Anchor,          key: "H" },
   { to: "/queue",        label: "Azioni",      icon: Zap,             key: "Q" },
   { to: "/analytics",    label: "Analisi",     icon: BarChart2,       key: "A" },
+  { to: "/chat",         label: "Chat AI",     icon: Brain,           key: "C" },
   { to: "/integrations", label: "Connettori",  icon: Plug,            key: "I" },
 ];
 
