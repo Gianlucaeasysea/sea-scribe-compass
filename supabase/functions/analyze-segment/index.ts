@@ -41,17 +41,17 @@ Deno.serve(async (req) => {
       });
     }
 
-    const userPrompt = `Analyze this Easysea customer segment:
+    const userPrompt = `Analizza questo segmento clienti Easysea (rispondi in italiano):
 
-Segment: ${segment.name}
-Customers: ${segment.customer_count}
-Avg LTV: €${segment.avg_ltv}
-Avg days since purchase: ${segment.avg_days_since_purchase}
-Top products owned: ${(segment.top_products ?? []).join(", ") || "—"}
-Missing products: ${(segment.missing_products ?? []).join(", ") || "—"}
-Avg email open rate: ${Math.round((segment.avg_email_open_rate ?? 0) * 100)}%
+Segmento: ${segment.name}
+Clienti: ${segment.customer_count}
+LTV medio: €${segment.avg_ltv}
+Giorni medi dall'ultimo acquisto: ${segment.avg_days_since_purchase}
+Top prodotti posseduti: ${(segment.top_products ?? []).join(", ") || "—"}
+Prodotti mancanti: ${(segment.missing_products ?? []).join(", ") || "—"}
+Open rate medio email: ${Math.round((segment.avg_email_open_rate ?? 0) * 100)}%
 
-Return a campaign plan.`;
+Restituisci un piano campagna.`;
 
     const analysis = await claudeStructured({
       system: SYSTEM_PROMPT,
