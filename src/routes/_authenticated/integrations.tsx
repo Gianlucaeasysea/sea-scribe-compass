@@ -123,7 +123,7 @@ function Integrations() {
     setOpenId(id);
   };
 
-  const handleSaveAndConnect = async () => {
+  const handleSaveCredentials = async () => {
     if (!openId) return;
     setBusy(true);
     setError(null);
@@ -134,9 +134,7 @@ function Integrations() {
         throw new Error(`Missing: ${missing.map((m) => m.label).join(", ")}`);
       }
       await saveCreds({ data: { id: openId, credentials: values } });
-      const result = await syncFns[openId]({});
-      if (!result.ok) throw new Error(result.message);
-      toast.success(`${openId}: ${result.message}`);
+      toast.success("Credentials saved! Click Sync now to import your data.");
       qc.invalidateQueries({ queryKey: ["integrations"] });
       qc.invalidateQueries({ queryKey: ["dashboard"] });
       setOpenId(null);
@@ -292,13 +290,13 @@ function Integrations() {
                 <Button variant="ghost" onClick={() => setOpenId(null)} disabled={busy}>
                   Cancel
                 </Button>
-                <Button onClick={handleSaveAndConnect} disabled={busy}>
+                <Button onClick={handleSaveCredentials} disabled={busy}>
                   {busy ? (
                     <>
-                      <Loader2 className="size-4 mr-2 animate-spin" /> Connecting…
+                      <Loader2 className="size-4 mr-2 animate-spin" /> Saving…
                     </>
                   ) : (
-                    "Save & Connect"
+                    "Save credentials"
                   )}
                 </Button>
               </DialogFooter>
