@@ -75,9 +75,14 @@ async function fetchAllShopifyRecords<T>(initialPath: string, key: string) {
   return records;
 }
 
-async function upsertInBatches(table: string, rows: any[], onConflict: string, size = 500) {
+async function upsertInBatches(table: "customers" | "orders", rows: any[], onConflict: string, size = 500) {
   for (let i = 0; i < rows.length; i += size) {
-    await supabaseAdmin.from(table).upsert(rows.slice(i, i + size), { onConflict });
+    const batch = rows.slice(i, i + size);
+    if (table === "customers") {
+      await supabaseAdmin.from("customers").upsert(batch, { onConflict });
+    } else {
+      await supabaseAdmin.from("orders").upsert(batch, { onConflict });
+    }
   }
 }
 
@@ -136,7 +141,7 @@ export const syncShopify = createServerFn({ method: "POST" })
           .from("customers")
           .select("id, shopify_id")
           .in("shopify_id", customerRows.slice(i, i + 500).map((c) => c.shopify_id));
-        mapped.push(...(data ?? []));
+        mapped.push(...(data ?? []).filter((row): row is { id: string; shopify_id: string } => Boolean(row.shopify_id)));
       }
       const idMap = new Map((mapped ?? []).map((m) => [m.shopify_id, m.id]));
 
