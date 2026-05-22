@@ -88,18 +88,19 @@ function sleep(ms: number) {
 
 type ShopifyResult = { json: any; link: string | null; status: number };
 
-function getShopifyTokens() {
+function getShopifyTokens(stored?: Record<string, string>) {
   const tokens = [
+    { name: "stored.access_token", value: stored?.access_token },
     { name: "SHOPIFY_ACCESS_TOKEN", value: process.env.SHOPIFY_ACCESS_TOKEN },
     { name: "SHOPIFY_CUSTOM_ADMIN_TOKEN", value: process.env.SHOPIFY_CUSTOM_ADMIN_TOKEN },
   ].filter((item): item is { name: string; value: string } => Boolean(item.value));
-
   return tokens.filter((token, index, all) => all.findIndex((item) => item.value === token.value) === index);
 }
 
-async function shopifyFetch(path: string): Promise<ShopifyResult> {
-  const tokens = getShopifyTokens();
-  if (!tokens.length) throw new Error("SHOPIFY_ACCESS_TOKEN or SHOPIFY_CUSTOM_ADMIN_TOKEN not configured");
+async function shopifyFetch(path: string, stored?: Record<string, string>): Promise<ShopifyResult> {
+  const tokens = getShopifyTokens(stored);
+  if (!tokens.length) return { json: null, link: null, status: 401 };
+
 
   let authFailureStatus: number | null = null;
   for (const token of tokens) {
