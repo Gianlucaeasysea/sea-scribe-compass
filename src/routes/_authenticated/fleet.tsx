@@ -144,6 +144,8 @@ function Fleet() {
           <MessageCircle className="size-3.5 text-muted-foreground" />
           <Chip label="All" active={communityFilter === "all"} onClick={() => { setCommunityFilter("all"); setPage(1); }} />
           <Chip label="In Circle community" active={communityFilter === "in"} onClick={() => { setCommunityFilter("in"); setPage(1); }} />
+          <Chip label="Circle + Shopify" active={communityFilter === "both"} onClick={() => { setCommunityFilter("both"); setPage(1); }} />
+          <Chip label="Circle only (no Shopify)" active={communityFilter === "circle_only"} onClick={() => { setCommunityFilter("circle_only"); setPage(1); }} />
           <Chip label="Not in community" active={communityFilter === "out"} onClick={() => { setCommunityFilter("out"); setPage(1); }} />
         </div>
         {allTags.length > 0 && (
