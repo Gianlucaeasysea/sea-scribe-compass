@@ -217,7 +217,7 @@ function Fleet() {
                         <button
                           onClick={() => removeTag(c, t)}
                           className="hover:text-destructive"
-                          aria-label={`Remove tag ${t}`}
+                          aria-label={`Rimuovi tag ${t}`}
                         >
                           <X className="size-3" />
                         </button>
