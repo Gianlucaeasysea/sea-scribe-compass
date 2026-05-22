@@ -35,7 +35,7 @@ function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-async function shopifyFetch(path: string) {
+async function shopifyFetch(path: string): Promise<{ json: any; link: string | null } | null> {
   const token = process.env.SHOPIFY_ACCESS_TOKEN;
   if (!token) throw new Error("SHOPIFY_ACCESS_TOKEN not configured");
   let res: Response | null = null;
@@ -48,10 +48,12 @@ async function shopifyFetch(path: string) {
     await sleep(Math.max(retryAfter, 1) * 1000);
   }
   if (!res) throw new Error(`Shopify ${path}: no response`);
+  if (res.status === 401 || res.status === 403) {
+    console.warn(`Shopify ${path}: ${res.status} (missing scope) — skipping`);
+    return null;
+  }
   if (!res.ok) {
-    const err: any = new Error(`Shopify ${path}: ${res.status} ${await res.text()}`);
-    err.status = res.status;
-    throw err;
+    throw new Error(`Shopify ${path}: ${res.status} ${await res.text()}`);
   }
   return { json: await res.json(), link: res.headers.get("link") };
 }
@@ -64,15 +66,16 @@ function getNextShopifyPath(linkHeader: string | null) {
   return `${url.pathname.split("/admin/api/2025-07/")[1]}${url.search}`;
 }
 
-async function fetchAllShopifyRecords<T>(initialPath: string, key: string) {
+async function fetchAllShopifyRecords<T>(initialPath: string, key: string): Promise<{ records: T[]; blocked: boolean }> {
   const records: T[] = [];
   let nextPath: string | null = initialPath;
   while (nextPath) {
-    const { json, link } = await shopifyFetch(nextPath);
-    records.push(...((json[key] ?? []) as T[]));
-    nextPath = getNextShopifyPath(link);
+    const result = await shopifyFetch(nextPath);
+    if (!result) return { records, blocked: true };
+    records.push(...((result.json[key] ?? []) as T[]));
+    nextPath = getNextShopifyPath(result.link);
   }
-  return records;
+  return { records, blocked: false };
 }
 
 async function upsertInBatches(table: "customers" | "orders", rows: any[], onConflict: string, size = 500) {
@@ -90,23 +93,13 @@ export const syncShopify = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async () => {
     try {
-      let customers: any[] = [];
-      let customersBlocked = false;
-      try {
-        customers = await fetchAllShopifyRecords<any>("customers.json?limit=250", "customers");
-      } catch (err: any) {
-        if (err?.status === 403) customersBlocked = true;
-        else throw err;
-      }
+      const customersResult = await fetchAllShopifyRecords<any>("customers.json?limit=250", "customers");
+      let customers = customersResult.records;
+      const customersBlocked = customersResult.blocked;
 
-      let orders: any[] = [];
-      let ordersBlocked = false;
-      try {
-        orders = await fetchAllShopifyRecords<any>("orders.json?status=any&limit=250", "orders");
-      } catch (err: any) {
-        if (err?.status === 403) ordersBlocked = true;
-        else throw err;
-      }
+      const ordersResult = await fetchAllShopifyRecords<any>("orders.json?status=any&limit=250", "orders");
+      const orders = ordersResult.records;
+      const ordersBlocked = ordersResult.blocked;
 
       // Fallback: derive customers from orders when customers API is blocked
       if (customersBlocked && orders.length) {
