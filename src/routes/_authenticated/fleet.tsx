@@ -111,10 +111,10 @@ function Fleet() {
     <div className="p-8 space-y-6 max-w-7xl mx-auto">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <p className="font-mono text-xs text-primary tracking-widest">FLEET</p>
-          <h1 className="text-3xl font-semibold mt-1">All sailors</h1>
+          <p className="font-mono text-xs text-primary tracking-widest">CLIENTI</p>
+          <h1 className="text-3xl font-semibold mt-1">Clienti</h1>
           <p className="text-muted-foreground text-sm mt-1">
-            Unified profiles matched by email across Shopify, Klaviyo, Facebook & Circle.
+            Profili completi di tutti i diportisti, unificati per email tra Shopify, Klaviyo, Facebook & Circle.
           </p>
         </div>
         <Button
@@ -123,42 +123,42 @@ function Fleet() {
           className="shrink-0"
         >
           <RefreshCw className={`size-4 mr-2 ${refreshMut.isPending ? "animate-spin" : ""}`} />
-          {refreshMut.isPending ? "Refreshing…" : "Refresh & unify"}
+          {refreshMut.isPending ? "Aggiornamento…" : "Aggiorna e unifica"}
         </Button>
       </div>
 
       <div className="space-y-3">
         <Input
-          placeholder="Search by name, email, country…"
+          placeholder="Cerca per nome o email..."
           value={q}
           onChange={(e) => { setQ(e.target.value); setPage(1); }}
           className="max-w-md"
         />
         <div className="flex flex-wrap gap-2">
-          <Chip label="All tiers" active={tierFilter === null} onClick={() => { setTierFilter(null); setPage(1); }} />
+          <Chip label="Tutti i segmenti" active={tierFilter === null} onClick={() => { setTierFilter(null); setPage(1); }} />
           {TIERS.map((t) => (
-            <Chip key={t} label={t} active={tierFilter === t} onClick={() => { setTierFilter(t); setPage(1); }} />
+            <Chip key={t} label={tierIT(t)} active={tierFilter === t} onClick={() => { setTierFilter(t); setPage(1); }} />
           ))}
         </div>
         <div className="flex flex-wrap gap-2 items-center">
           <MessageCircle className="size-3.5 text-muted-foreground" />
-          <Chip label="All" active={communityFilter === "all"} onClick={() => { setCommunityFilter("all"); setPage(1); }} />
-          <Chip label="In Circle community" active={communityFilter === "in"} onClick={() => { setCommunityFilter("in"); setPage(1); }} />
+          <Chip label="Tutti" active={communityFilter === "all"} onClick={() => { setCommunityFilter("all"); setPage(1); }} />
+          <Chip label="In community Circle" active={communityFilter === "in"} onClick={() => { setCommunityFilter("in"); setPage(1); }} />
           <Chip label="Circle + Shopify" active={communityFilter === "both"} onClick={() => { setCommunityFilter("both"); setPage(1); }} />
-          <Chip label="Circle only (no Shopify)" active={communityFilter === "circle_only"} onClick={() => { setCommunityFilter("circle_only"); setPage(1); }} />
-          <Chip label="Not in community" active={communityFilter === "out"} onClick={() => { setCommunityFilter("out"); setPage(1); }} />
+          <Chip label="Solo Circle (no Shopify)" active={communityFilter === "circle_only"} onClick={() => { setCommunityFilter("circle_only"); setPage(1); }} />
+          <Chip label="Fuori community" active={communityFilter === "out"} onClick={() => { setCommunityFilter("out"); setPage(1); }} />
         </div>
         {allTags.length > 0 && (
           <div className="flex flex-wrap gap-2 items-center">
             <Tag className="size-3.5 text-muted-foreground" />
-            <Chip label="Any tag" active={tagFilter === null} onClick={() => { setTagFilter(null); setPage(1); }} />
+            <Chip label="Qualsiasi tag" active={tagFilter === null} onClick={() => { setTagFilter(null); setPage(1); }} />
             {allTags.map((t) => (
               <Chip key={t} label={t} active={tagFilter === t} onClick={() => { setTagFilter(t); setPage(1); }} />
             ))}
           </div>
         )}
         <p className="text-xs text-muted-foreground">
-          {rows.length} sailor{rows.length === 1 ? "" : "s"} matched · page {safePage}/{totalPages}
+          {rows.length} client{rows.length === 1 ? "e" : "i"} trovat{rows.length === 1 ? "o" : "i"} · pagina {safePage}/{totalPages}
         </p>
       </div>
 
@@ -166,12 +166,12 @@ function Fleet() {
         <table className="w-full text-sm">
           <thead className="bg-surface-2 text-xs uppercase tracking-wider text-muted-foreground">
             <tr>
-              <th className="text-left p-3">Sailor</th>
-              <th className="text-left p-3">Tier</th>
-              <th className="text-left p-3">Tags</th>
-              <th className="text-right p-3">LTV</th>
-              <th className="text-right p-3">Orders</th>
-              <th className="text-right p-3">Last order</th>
+              <th className="text-left p-3">Cliente</th>
+              <th className="text-left p-3">Segmento</th>
+              <th className="text-left p-3">Tag</th>
+              <th className="text-right p-3">Valore</th>
+              <th className="text-right p-3">Ordini</th>
+              <th className="text-right p-3">Ultimo acquisto</th>
             </tr>
           </thead>
           <tbody>
