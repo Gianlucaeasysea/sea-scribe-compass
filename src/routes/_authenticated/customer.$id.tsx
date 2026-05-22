@@ -202,6 +202,64 @@ function CustomerProfile() {
             })()}
           </div>
 
+          <div className="glow-card p-5 space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="font-semibold flex items-center gap-2">
+                <LifeBuoy className="size-4 text-primary" /> Support history
+              </h3>
+              <span className={`text-[10px] uppercase tracking-wider px-2 py-0.5 rounded border ${ticketCountTone}`}>
+                {tickets.length} ticket{tickets.length === 1 ? "" : "s"}
+              </span>
+            </div>
+            {tickets.length === 0 ? (
+              <p className="text-xs text-emerald-300">No support tickets — happy customer! ✓</p>
+            ) : (
+              <>
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between text-[11px] text-muted-foreground">
+                    <span>{ticketsSolved} of {tickets.length} resolved</span>
+                    <span className="font-mono">{resolutionRate}%</span>
+                  </div>
+                  <div className="h-1.5 rounded bg-surface-2/60 overflow-hidden">
+                    <div className="h-full bg-emerald-400/70" style={{ width: `${resolutionRate}%` }} />
+                  </div>
+                </div>
+                <div className="space-y-2 max-h-[260px] overflow-auto pr-1">
+                  {tickets.map((t: any) => {
+                    const status = (t.status ?? "").toLowerCase();
+                    const dot = solvedStatuses.has(status)
+                      ? "bg-emerald-400"
+                      : openStatuses.has(status)
+                        ? "bg-red-400"
+                        : "bg-amber-400";
+                    const prio = (t.priority ?? "").toLowerCase();
+                    const sat = (t.satisfaction_rating ?? "").toLowerCase();
+                    return (
+                      <div key={t.id} className="p-2 rounded-md bg-surface-2/40 border border-border">
+                        <div className="flex items-center gap-2">
+                          <span className={`size-2 rounded-full shrink-0 ${dot}`} />
+                          <p className="text-xs flex-1 truncate" title={t.subject ?? ""}>
+                            {(t.subject ?? "(no subject)").slice(0, 60)}
+                          </p>
+                          {(prio === "urgent" || prio === "high") && (
+                            <span className="text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-red-500/15 text-red-300 border border-red-500/40">
+                              {prio}
+                            </span>
+                          )}
+                          {sat === "good" && <span title="Good rating">👍</span>}
+                          {sat === "bad" && <span title="Bad rating">👎</span>}
+                        </div>
+                        <p className="text-[10px] text-muted-foreground mt-1 ml-4">
+                          {relativeDays(t.created_at)} · {t.status ?? "—"}
+                        </p>
+                      </div>
+                    );
+                  })}
+                </div>
+              </>
+            )}
+          </div>
+
 
           <div className="glow-card p-5 space-y-3">
             <h3 className="font-semibold">Next-best actions</h3>
