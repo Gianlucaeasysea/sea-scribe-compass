@@ -118,6 +118,14 @@ function Dashboard() {
             {syncAllMut.isPending ? `Syncing ${syncStep ?? "…"}` : "Sync all sources"}
           </Button>
           <Button
+            onClick={() => refreshMut.mutate()}
+            disabled={refreshMut.isPending || syncAllMut.isPending}
+            variant="outline"
+          >
+            <Sparkles className={`size-4 mr-2 ${refreshMut.isPending ? "animate-pulse" : ""}`} />
+            {refreshMut.isPending ? "Updating fleet…" : "Update fleet"}
+          </Button>
+          <Button
             onClick={() => qc.invalidateQueries()}
             variant="outline"
             disabled={isFetching || syncAllMut.isPending}
