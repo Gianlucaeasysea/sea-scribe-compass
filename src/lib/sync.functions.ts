@@ -291,8 +291,13 @@ export const syncKlaviyo = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async () => {
     try {
-      const key = process.env.KLAVIYO_API_KEY;
-      if (!key) throw new Error("KLAVIYO_API_KEY not configured");
+      const stored = await loadCredentials("klaviyo");
+      const key = stored.api_key || process.env.KLAVIYO_API_KEY;
+      if (!key) {
+        const msg = "Klaviyo API key not configured. Click Connect to add your credentials.";
+        await markStatus("klaviyo", "Klaviyo", false, 0, msg);
+        return { ok: false, message: msg };
+      }
 
       // Pull recent metric events (opens + clicks). Klaviyo has separate metric IDs per account,
       // so we query the global events endpoint and filter client-side by metric name.
