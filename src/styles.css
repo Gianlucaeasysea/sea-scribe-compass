@@ -39,29 +39,29 @@
 }
 
 :root {
-  /* Easysea brand — dark nautical */
+  /* Easysea brand — pure black + electric lime (from easysea.org) */
   --radius: 0.75rem;
 
-  /* Backgrounds */
-  --bg-base: #0B0F1A;
-  --bg-surface: #111827;
-  --bg-elevated: #1A2235;
-  --bg-hover: #1E2A3D;
+  /* Backgrounds — pure-black canvas, like the e-commerce site */
+  --bg-base: #000000;
+  --bg-surface: #0A0A0A;
+  --bg-elevated: #141414;
+  --bg-hover: #1F1F1F;
 
-  /* Brand */
+  /* Brand — electric lime accent, the signature Easysea highlight */
   --brand-primary: #FFFFFF;
-  --brand-accent: #00C5A1;
-  --brand-accent-dim: #00A88A;
-  --brand-accent-glow: rgba(0, 197, 161, 0.15);
+  --brand-accent: #CCFF00;
+  --brand-accent-dim: #A8D900;
+  --brand-accent-glow: rgba(204, 255, 0, 0.18);
 
   /* Text */
-  --text-primary: #F8FAFC;
-  --text-secondary: #94A3B8;
-  --text-muted: #475569;
-  --text-inverted: #0B0F1A;
+  --text-primary: #FFFFFF;
+  --text-secondary: #A1A1AA;
+  --text-muted: #52525B;
+  --text-inverted: #000000;
 
   /* Status */
-  --color-success: #10B981;
+  --color-success: #22C55E;
   --color-warning: #F59E0B;
   --color-danger: #EF4444;
   --color-info: #3B82F6;
@@ -69,7 +69,8 @@
   /* Borders */
   --border-subtle: rgba(255,255,255,0.06);
   --border-default: rgba(255,255,255,0.10);
-  --border-accent: rgba(0, 197, 161, 0.3);
+  --border-accent: rgba(204, 255, 0, 0.35);
+
 
   /* shadcn token mapping */
   --background: var(--bg-base);
