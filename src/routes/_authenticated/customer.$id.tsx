@@ -2,7 +2,7 @@ import { createFileRoute, useParams, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { getCustomerProfile } from "@/lib/queries.functions";
-import { ArrowLeft, Mail, MapPin, Anchor, MessageCircle, TrendingDown, ShoppingBag } from "lucide-react";
+import { ArrowLeft, Mail, MapPin, Anchor, MessageCircle, TrendingDown, ShoppingBag, LifeBuoy, AlertTriangle } from "lucide-react";
 import { formatDate, formatEuro } from "@/lib/format";
 import { ClaudeCustomerInsights } from "@/components/ai/claude-customer-insights";
 
