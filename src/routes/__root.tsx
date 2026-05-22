@@ -55,8 +55,10 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
+      <ClientErrorReporter />
       <Outlet />
       <Toaster theme="dark" position="top-right" />
     </QueryClientProvider>
+
   );
 }
