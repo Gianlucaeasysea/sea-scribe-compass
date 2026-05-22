@@ -243,7 +243,7 @@ export const syncShopify = createServerFn({ method: "POST" })
     customersSynced: input?.customersSynced ?? 0,
     ordersSynced: input?.ordersSynced ?? 0,
   }))
-  .handler(async () => {
+  .handler(async ({ data }) => {
     try {
       const stored = await loadCredentials("shopify");
       const hasToken = Boolean(stored.access_token || process.env.SHOPIFY_ACCESS_TOKEN || process.env.SHOPIFY_CUSTOM_ADMIN_TOKEN);
@@ -253,34 +253,39 @@ export const syncShopify = createServerFn({ method: "POST" })
         return { ok: false, message: msg };
       }
 
-      // 1. Verifica connessione: shop.json richiede solo accesso base.
-      const shopProbe = await shopifyFetch("shop.json", stored);
-      if (shopProbe.status === 401) {
-        const msg = "Token Shopify non valido o scaduto (401). Aggiorna le credenziali.";
-        await markStatus("shopify", "Shopify", false, 0, msg);
-        return { ok: false, message: msg };
-      }
-      if (shopProbe.status === 403 || shopProbe.json === null) {
-        const msg = "Permessi insufficienti per leggere lo shop (403). Il token non ha gli scope necessari.";
-        await markStatus("shopify", "Shopify", false, 0, msg);
-        return { ok: false, message: msg };
+      const isInitial = !data.nextCustomersPath && !data.nextOrdersPath && !data.customersSynced && !data.ordersSynced && data.productCount === null;
+
+      if (isInitial) {
+        const shopProbe = await shopifyFetch("shop.json", stored);
+        if (shopProbe.status === 401) {
+          const msg = "Token Shopify non valido o scaduto (401). Aggiorna le credenziali.";
+          await markStatus("shopify", "Shopify", false, 0, msg);
+          return { ok: false, done: true, message: msg };
+        }
+        if (shopProbe.status === 403 || shopProbe.json === null) {
+          const msg = "Permessi insufficienti per leggere lo shop (403). Il token non ha gli scope necessari.";
+          await markStatus("shopify", "Shopify", false, 0, msg);
+          return { ok: false, done: true, message: msg };
+        }
       }
 
-      // 2. Conteggio prodotti (read_products è di solito concesso).
-      const productsProbe = await shopifyFetch("products/count.json", stored);
-      const productCount: number | null = productsProbe.json?.count ?? null;
+      let productCount: number | null = data.productCount;
+      if (isInitial) {
+        const productsProbe = await shopifyFetch("products/count.json", stored);
+        productCount = productsProbe.json?.count ?? null;
+      }
 
-      // 3. Clienti e ordini — se bloccati da scope, non far fallire tutto.
-      const [customersResult, ordersResult] = await Promise.all([
-        fetchAllShopifyRecords<any>(`customers.json?limit=${SHOPIFY_PAGE_LIMIT}`, "customers", stored),
-        fetchAllShopifyRecords<any>(`orders.json?status=any&limit=${SHOPIFY_PAGE_LIMIT}`, "orders", stored),
+      const customersPath = data.nextCustomersPath ?? (isInitial ? `customers.json?limit=${SHOPIFY_PAGE_LIMIT}` : null);
+      const ordersPath = data.nextOrdersPath ?? (isInitial ? `orders.json?status=any&limit=${SHOPIFY_PAGE_LIMIT}` : null);
+      const [customersPage, ordersPage] = await Promise.all([
+        customersPath ? shopifyFetch(customersPath, stored) : Promise.resolve({ json: { customers: [] }, link: null, status: 200 }),
+        ordersPath ? shopifyFetch(ordersPath, stored) : Promise.resolve({ json: { orders: [] }, link: null, status: 200 }),
       ]);
 
-      
-      let customers = customersResult.records;
-      const customersBlocked = customersResult.blockedStatus !== null;
-      const orders = ordersResult.records;
-      const ordersBlocked = ordersResult.blockedStatus !== null;
+      const customersBlocked = Boolean(customersPath && customersPage.json === null);
+      const ordersBlocked = Boolean(ordersPath && ordersPage.json === null);
+      const orders = (ordersPage.json?.orders ?? []) as any[];
+      let customerRows = await upsertShopifyCustomers((customersPage.json?.customers ?? []) as any[]);
 
       if (customersBlocked && orders.length) {
         const seen = new Map<string, any>();
@@ -288,59 +293,20 @@ export const syncShopify = createServerFn({ method: "POST" })
           const c = o.customer;
           if (c?.id && !seen.has(String(c.id))) seen.set(String(c.id), c);
         }
-        customers = [...seen.values()];
+        customerRows = await upsertShopifyCustomers([...seen.values()]);
       }
 
-      const customerRows = customers.map((c) => ({
-        shopify_id: String(c.id),
-        email: c.email ?? `${c.id}@unknown.local`,
-        name: [c.first_name, c.last_name].filter(Boolean).join(" ") || c.email || "Cliente",
-        country: c.default_address?.country ?? null,
-        city: c.default_address?.city ?? null,
-        lifetime_value: Number(c.total_spent ?? 0),
-        total_orders: Number(c.orders_count ?? 0),
-        first_order_at: null,
-        last_order_at: c.last_order_id ? c.updated_at : null,
-        tags: c.tags ? String(c.tags).split(",").map((t: string) => t.trim()).filter(Boolean) : [],
-      }));
-
-      if (customerRows.length) {
-        await upsertInBatches("customers", customerRows, "shopify_id");
-      }
-
-      const mapped: { id: string; shopify_id: string }[] = [];
-      for (let i = 0; i < customerRows.length; i += 500) {
-        const { data } = await supabaseAdmin
-          .from("customers")
-          .select("id, shopify_id")
-          .in("shopify_id", customerRows.slice(i, i + 500).map((c) => c.shopify_id));
-        mapped.push(...(data ?? []).filter((row): row is { id: string; shopify_id: string } => Boolean(row.shopify_id)));
-      }
-      const idMap = new Map((mapped ?? []).map((m) => [m.shopify_id, m.id]));
-
-      const orderRows = orders
-        .filter((o) => o.customer?.id && idMap.has(String(o.customer.id)))
-        .map((o) => ({
-          shopify_order_id: String(o.id),
-          customer_id: idMap.get(String(o.customer.id))!,
-          total: Number(o.total_price ?? 0),
-          discount_used: Number(o.total_discounts ?? 0) > 0,
-          created_at: o.created_at,
-          line_items: (o.line_items ?? []).map((li: any) => ({
-            name: li.title,
-            quantity: li.quantity,
-            price: Number(li.price ?? 0),
-          })),
-        }));
-
-      if (orderRows.length) {
-        await upsertInBatches("orders", orderRows, "shopify_order_id");
-      }
+      const orderRows = await upsertShopifyOrders(orders);
+      const customersSynced = data.customersSynced + customerRows.length;
+      const ordersSynced = data.ordersSynced + orderRows.length;
+      const nextCustomersPath = customersBlocked ? null : getNextShopifyPath(customersPage.link);
+      const nextOrdersPath = ordersBlocked ? null : getNextShopifyPath(ordersPage.link);
+      const done = !nextCustomersPath && !nextOrdersPath;
 
       const parts: string[] = [];
       if (productCount !== null) parts.push(`${productCount} prodotti`);
-      parts.push(`${customerRows.length} clienti`);
-      parts.push(`${orderRows.length} ordini`);
+      parts.push(`${customersSynced} clienti`);
+      parts.push(`${ordersSynced} ordini`);
       const warnings: string[] = [];
       if (customersBlocked) warnings.push("clienti bloccati (manca scope read_customers)");
       if (ordersBlocked) warnings.push("ordini bloccati (manca scope read_orders)");
@@ -349,11 +315,12 @@ export const syncShopify = createServerFn({ method: "POST" })
         ? ". Abilita 'Protected customer data' nell'app Shopify per importarli."
         : "";
       const hint = warnings.length ? ` — ${warnings.join("; ")}${permissionHint}` : "";
-      const msg = `${parts.join(" · ")}${hint}`;
+      const progress = done ? "" : " — importazione in corso…";
+      const msg = `${parts.join(" · ")}${hint}${progress}`;
 
       // Connesso: shop.json risponde. I dati limitati non rendono "rotta" l'integrazione.
-      await markStatus("shopify", "Shopify", true, customerRows.length + orderRows.length, msg);
-      return { ok: true, message: msg };
+      await markStatus("shopify", "Shopify", true, customersSynced + ordersSynced, msg);
+      return { ok: true, done, message: msg, nextCustomersPath, nextOrdersPath, productCount, customersSynced, ordersSynced };
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Unknown error";
       await markStatus("shopify", "Shopify", false, 0, msg.slice(0, 200));
