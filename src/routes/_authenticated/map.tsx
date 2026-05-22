@@ -273,14 +273,14 @@ function RfmScatter({
               <g key={d}>
                 <line x1={x} x2={x} y1={PAD.t} y2={H - PAD.b} stroke="currentColor" strokeOpacity={0.05} />
                 <text x={x} y={H - PAD.b + 16} fontSize={10} textAnchor="middle" className="fill-muted-foreground font-mono">
-                  {d === 0 ? "today" : `${d}d`}
+                  {d === 0 ? "oggi" : `${d}g`}
                 </text>
               </g>
             );
           })}
           {/* axes labels */}
           <text x={PAD.l} y={H - 6} fontSize={10} className="fill-muted-foreground">
-            recency →
+            recenza →
           </text>
 
           {/* dots */}
