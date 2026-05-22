@@ -260,21 +260,21 @@ function Fleet() {
             ))}
           </tbody>
         </table>
-        {rows.length === 0 && <p className="p-8 text-center text-muted-foreground text-sm">No sailors match these filters.</p>}
+        {rows.length === 0 && <p className="p-8 text-center text-muted-foreground text-sm">Nessun cliente corrisponde alla ricerca.</p>}
       </div>
 
       {totalPages > 1 && (
         <div className="flex items-center justify-between text-xs text-muted-foreground">
           <span>
-            Showing {(safePage - 1) * PAGE_SIZE + 1}–{Math.min(safePage * PAGE_SIZE, rows.length)} of {rows.length}
+            Mostrati {(safePage - 1) * PAGE_SIZE + 1}–{Math.min(safePage * PAGE_SIZE, rows.length)} di {rows.length}
           </span>
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" disabled={safePage <= 1} onClick={() => setPage(safePage - 1)}>
-              <ChevronLeft className="size-3 mr-1" /> Prev
+              <ChevronLeft className="size-3 mr-1" /> Indietro
             </Button>
             <span className="font-mono">{safePage} / {totalPages}</span>
             <Button variant="outline" size="sm" disabled={safePage >= totalPages} onClick={() => setPage(safePage + 1)}>
-              Next <ChevronRight className="size-3 ml-1" />
+              Avanti <ChevronRight className="size-3 ml-1" />
             </Button>
           </div>
         </div>
