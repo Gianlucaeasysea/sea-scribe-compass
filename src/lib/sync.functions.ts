@@ -1,9 +1,8 @@
 // Sync functions: fetch live data from Shopify, Klaviyo, Facebook Ads, Circle
 // and upsert into Supabase. Each function returns a small summary used by the UI.
 import { createServerFn } from "@tanstack/react-start";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { z } from "zod";
+
 
 const SHOP_DOMAIN = "easysea-design-lab.myshopify.com";
 
