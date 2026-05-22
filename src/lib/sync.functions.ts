@@ -36,8 +36,8 @@ function sleep(ms: number) {
 }
 
 async function shopifyFetch(path: string): Promise<{ json: any; link: string | null } | null> {
-  const token = process.env.SHOPIFY_ACCESS_TOKEN;
-  if (!token) throw new Error("SHOPIFY_ACCESS_TOKEN not configured");
+  const token = process.env.SHOPIFY_CUSTOM_ADMIN_TOKEN || process.env.SHOPIFY_ACCESS_TOKEN;
+  if (!token) throw new Error("SHOPIFY_CUSTOM_ADMIN_TOKEN or SHOPIFY_ACCESS_TOKEN not configured");
   let res: Response | null = null;
   for (let attempt = 0; attempt < 3; attempt += 1) {
     res = await fetch(`https://${SHOP_DOMAIN}/admin/api/2025-07/${path}`, {
