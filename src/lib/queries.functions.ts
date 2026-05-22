@@ -12,6 +12,69 @@ export const refreshFleet = createServerFn({ method: "POST" })
     return data as { customers: number; rfm: number; recommendations: number; actions: number };
   });
 
+// Re-tag every customer based on which connectors carry data for them.
+// Shopify is the canonical base (shopify_id); Klaviyo/Circle/Facebook match
+// by joining on customer_id already resolved during each connector sync.
+export const unifyCustomerProfiles = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async () => {
+    await (supabaseAdmin as any).rpc("refresh_fleet");
+
+    const [{ data: customers }, { data: emailEv }, { data: circleAct }, { data: fbEv }] = await Promise.all([
+      supabaseAdmin.from("customers").select("id, email, shopify_id, klaviyo_id, circle_id, tags"),
+      supabaseAdmin.from("email_events").select("customer_id"),
+      supabaseAdmin.from("circle_activity").select("customer_id"),
+      supabaseAdmin.from("fb_ad_events").select("customer_id"),
+    ]);
+
+    const klavSet = new Set((emailEv ?? []).map((e: any) => e.customer_id));
+    const circleSet = new Set((circleAct ?? []).map((c: any) => c.customer_id));
+    const fbSet = new Set((fbEv ?? []).map((f: any) => f.customer_id));
+
+    const SOURCE_TAGS = new Set(["shopify", "klaviyo", "circle-member", "circle-only", "facebook"]);
+    const updates: { id: string; email: string; tags: string[] }[] = [];
+
+    let total = 0, shopify = 0, noShopify = 0;
+    let klavMatched = 0, klavOnly = 0;
+    let circleMatched = 0, circleOnly = 0;
+    let fbMatched = 0;
+
+    for (const c of (customers ?? []) as any[]) {
+      total++;
+      const hasShopify = !!c.shopify_id;
+      const hasKlav = !!c.klaviyo_id || klavSet.has(c.id);
+      const hasCircle = !!c.circle_id || circleSet.has(c.id);
+      const hasFb = fbSet.has(c.id);
+
+      if (hasShopify) shopify++; else noShopify++;
+      if (hasKlav) { hasShopify ? klavMatched++ : klavOnly++; }
+      if (hasCircle) { hasShopify ? circleMatched++ : circleOnly++; }
+      if (hasFb && hasShopify) fbMatched++;
+
+      const base = (Array.isArray(c.tags) ? c.tags : []).filter((t: string) => !SOURCE_TAGS.has(t));
+      const next = [...base];
+      if (hasShopify) next.push("shopify");
+      if (hasKlav) next.push("klaviyo");
+      if (hasCircle) next.push("circle-member");
+      if (hasCircle && !hasShopify) next.push("circle-only");
+      if (hasFb) next.push("facebook");
+
+      updates.push({ id: c.id, email: c.email, tags: Array.from(new Set(next)) });
+    }
+
+    for (let i = 0; i < updates.length; i += 500) {
+      const batch = updates.slice(i, i + 500);
+      await (supabaseAdmin.from("customers") as any).upsert(batch, { onConflict: "id" });
+    }
+
+    return {
+      total, shopify, noShopify,
+      klaviyoMatched: klavMatched, klaviyoOnly: klavOnly,
+      circleMatched, circleOnly,
+      facebookMatched: fbMatched,
+    };
+  });
+
 export const getDashboardData = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
