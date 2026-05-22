@@ -6,8 +6,8 @@ import { useMemo, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { formatDate } from "@/lib/format";
-import { tierIT } from "@/lib/i18n";
+import { formatDate, formatEuro } from "@/lib/format";
+import { tierIT, tierBadgeClass, boatIcon } from "@/lib/i18n";
 import { Tag, Plus, X, MessageCircle, RefreshCw, ChevronLeft, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 
