@@ -125,8 +125,6 @@ Deno.serve(async (req) => {
       );
     }
 
-    let updatedCount = 0;
-    let unmatchedCount = 0;
 
     const matchedRows: any[] = [];
     const newRows: any[] = [];
