@@ -155,17 +155,19 @@ function Integrations() {
     if (!openId) return;
     setBusy(true);
     setError(null);
+    const id = openId;
     try {
       // Require all fields filled
-      const missing = CREDENTIAL_FORMS[openId].fields.filter((f) => !values[f.key]?.trim());
+      const missing = CREDENTIAL_FORMS[id].fields.filter((f) => !values[f.key]?.trim());
       if (missing.length) {
         throw new Error(`Missing: ${missing.map((m) => m.label).join(", ")}`);
       }
-      await saveCreds({ data: { id: openId, credentials: values } });
-      toast.success("Credentials saved! Click Sync now to import your data.");
+      await saveCreds({ data: { id, credentials: values } });
       qc.invalidateQueries({ queryKey: ["integrations"] });
-      qc.invalidateQueries({ queryKey: ["dashboard"] });
       setOpenId(null);
+      toast.success("Credentials saved — syncing now…");
+      // Auto-trigger the first sync so the user doesn't have to click again
+      mutation.mutate(id);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Unknown error");
     } finally {
