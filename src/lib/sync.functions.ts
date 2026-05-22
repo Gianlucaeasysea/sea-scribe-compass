@@ -439,12 +439,24 @@ export const syncCircle = createServerFn({ method: "POST" })
         return { ok: false, message: msg };
       }
 
-      const res = await fetch(
-        `https://app.circle.so/api/v1/community_members?community_id=${community}&per_page=100`,
-        { headers: { Authorization: `Token ${token}` } },
-      );
-      if (!res.ok) throw new Error(`Circle ${res.status}: ${await res.text()}`);
-      const members = (await res.json()) as any[];
+      const allMembers: any[] = [];
+      let page = 1;
+      let hasMore = true;
+      while (hasMore && page <= 20) {
+        const res: Response = await fetch(
+          `https://app.circle.so/api/v1/community_members?community_id=${community}&per_page=100&page=${page}`,
+          { headers: { Authorization: `Token ${token}` } },
+        );
+        if (!res.ok) throw new Error(`Circle ${res.status}: ${await res.text()}`);
+        const batch = (await res.json()) as any[];
+        if (!Array.isArray(batch) || batch.length === 0) {
+          hasMore = false;
+        } else {
+          allMembers.push(...batch);
+          hasMore = batch.length === 100;
+          page++;
+        }
+      }
 
       const emails = members.map((m) => m.email).filter(Boolean);
       const { data: existing } = emails.length
