@@ -68,17 +68,17 @@ Deno.serve(async (req) => {
     }
 
     const orders = Array.isArray(customer.orders) ? customer.orders : [];
-    const userPrompt = `Analyze this Easysea customer and provide marketing recommendations:
+    const userPrompt = `Analizza questo cliente Easysea e fornisci raccomandazioni marketing (in italiano):
 
-Customer: ${customer.name} (${customer.country ?? "unknown"})
+Cliente: ${customer.name} (${customer.country ?? "sconosciuto"})
 Lifetime Value: €${customer.lifetime_value ?? 0}
-Boat type: ${customer.boat_type || "unknown"}
-Days since last purchase: ${customer.last_purchase_days_ago ?? "unknown"}
-Email engagement: ${Math.round((customer.email_open_rate ?? 0) * 100)}% open rate
-Community activity score: ${customer.circle_activity_score ?? 0}/10
+Tipo barca: ${customer.boat_type || "sconosciuto"}
+Giorni dall'ultimo acquisto: ${customer.last_purchase_days_ago ?? "sconosciuto"}
+Engagement email: ${Math.round((customer.email_open_rate ?? 0) * 100)}% open rate
+Attività community: ${customer.circle_activity_score ?? 0}/10
 
-Purchase history:
-${orders.map((o: { product: string; price: number; date: string }) => `- ${o.product} — €${o.price} (${o.date})`).join("\n") || "(no orders)"}`;
+Storico acquisti:
+${orders.map((o: { product: string; price: number; date: string }) => `- ${o.product} — €${o.price} (${o.date})`).join("\n") || "(nessun ordine)"}`;
 
     const analysis = await claudeStructured({
       system: SYSTEM_PROMPT,
