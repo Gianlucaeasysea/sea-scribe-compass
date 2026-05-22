@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { formatEuro } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   component: Dashboard,
