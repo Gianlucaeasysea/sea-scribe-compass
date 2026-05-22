@@ -3,7 +3,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-const SHOP_DOMAIN = "easysea-design-lab.myshopify.com";
+const DEFAULT_SHOP_DOMAIN = "easysea-design-lab.myshopify.com";
 const SHOPIFY_API_VERSION = "2025-07";
 const SHOPIFY_PAGE_LIMIT = 50;
 const SHOPIFY_MAX_PAGES = 1;
@@ -106,7 +106,8 @@ async function shopifyFetch(path: string, stored?: Record<string, string>): Prom
   for (const token of tokens) {
     let res: Response | null = null;
     for (let attempt = 0; attempt < 5; attempt += 1) {
-      res = await fetch(`https://${SHOP_DOMAIN}/admin/api/${SHOPIFY_API_VERSION}/${path}`, {
+      const shopDomain = stored?.shop_domain || DEFAULT_SHOP_DOMAIN;
+      res = await fetch(`https://${shopDomain}/admin/api/${SHOPIFY_API_VERSION}/${path}`, {
         headers: { "X-Shopify-Access-Token": token.value, "Content-Type": "application/json" },
         signal: AbortSignal.timeout(8_000),
       });
