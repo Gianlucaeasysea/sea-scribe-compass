@@ -123,25 +123,65 @@ function CustomerProfile() {
 
         <div className="space-y-6">
           <div className="glow-card p-5 space-y-3">
-            <h3 className="font-semibold flex items-center gap-2"><MessageCircle className="size-4 text-primary" /> Community signal</h3>
-            {data.circle ? (
-              <>
-                <p className="text-3xl font-mono text-primary">{data.circle.engagement_score}</p>
-                <p className="text-xs text-muted-foreground">
-                  {data.circle.posts} posts · {data.circle.comments} comments · {data.circle.reactions} reactions
-                </p>
-                <div className="flex gap-1 flex-wrap">
-                  {(data.circle.badges ?? []).map((b: string) => (
-                    <span key={b} className="text-[10px] px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">{b}</span>
-                  ))}
-                </div>
-              </>
-            ) : c.circle_id || (c.tags ?? []).includes("circle-member") ? (
-              <p className="text-xs text-muted-foreground">Circle member — no engagement tracked yet.</p>
-            ) : (
-              <p className="text-xs text-muted-foreground">Not in Circle community.</p>
-            )}
+            <h3 className="font-semibold flex items-center gap-2">
+              <MessageCircle className="size-4 text-primary" /> Circle community
+            </h3>
+            {(() => {
+              const inCircle = !!c.circle_id || (c.tags ?? []).includes("circle-member");
+              if (!inCircle) {
+                return <p className="text-xs text-muted-foreground">Not in Circle community.</p>;
+              }
+              const a = data.circle;
+              return (
+                <>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded bg-purple-500/15 text-purple-300 border border-purple-500/40">
+                      Active member
+                    </span>
+                    {c.circle_id && (
+                      <span className="font-mono text-[10px] text-muted-foreground">ID {c.circle_id}</span>
+                    )}
+                  </div>
+                  <div className="grid grid-cols-3 gap-2 text-center">
+                    <div className="rounded bg-surface-2/40 border border-border p-2">
+                      <p className="text-lg font-mono text-primary">{a?.posts ?? 0}</p>
+                      <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Posts</p>
+                    </div>
+                    <div className="rounded bg-surface-2/40 border border-border p-2">
+                      <p className="text-lg font-mono text-primary">{a?.comments ?? 0}</p>
+                      <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Comments</p>
+                    </div>
+                    <div className="rounded bg-surface-2/40 border border-border p-2">
+                      <p className="text-lg font-mono text-primary">{a?.reactions ?? 0}</p>
+                      <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Reactions</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-muted-foreground">Engagement</span>
+                    <span className="font-mono text-primary">{a?.engagement_score ?? 0}/10</span>
+                  </div>
+                  {a?.last_active_at && (
+                    <p className="text-[11px] text-muted-foreground">
+                      Last active {formatDate(a.last_active_at)}
+                    </p>
+                  )}
+                  {a && (a.badges ?? []).length > 0 && (
+                    <div className="flex gap-1 flex-wrap">
+                      {(a.badges ?? []).map((b: string) => (
+                        <span key={b} className="text-[10px] px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">{b}</span>
+                      ))}
+                    </div>
+                  )}
+                  {!a && (
+                    <p className="text-[11px] text-muted-foreground italic">
+                      No engagement tracked yet — run a Circle sync to fetch activity.
+                    </p>
+                  )}
+                </>
+              );
+            })()}
           </div>
+
 
           <div className="glow-card p-5 space-y-3">
             <h3 className="font-semibold">Next-best actions</h3>
