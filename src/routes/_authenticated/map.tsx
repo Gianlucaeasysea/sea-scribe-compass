@@ -7,6 +7,7 @@ import { TIER_COLOR } from "@/lib/intelligence";
 import { Input } from "@/components/ui/input";
 import { Search, Tag as TagIcon, ArrowRight, MessageCircle } from "lucide-react";
 import { formatEuro } from "@/lib/format";
+import { tierIT } from "@/lib/i18n";
 
 export const Route = createFileRoute("/_authenticated/map")({
   component: FleetMap,
