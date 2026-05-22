@@ -34,7 +34,7 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       <ClientErrorReporter />
       <Outlet />
-      <Toaster theme="dark" position="top-right" />
+      <Toaster theme="dark" position="bottom-right" richColors closeButton />
     </QueryClientProvider>
 
   );

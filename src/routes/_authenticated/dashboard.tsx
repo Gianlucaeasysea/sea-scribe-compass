@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { formatEuro } from "@/lib/format";
 import { tierIT } from "@/lib/i18n";
 import { ClaudeActionsFeed } from "@/components/ai/claude-actions-feed";
+import { CountUp } from "@/components/ui/count-up";
 import { useState } from "react";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
@@ -153,11 +154,12 @@ function Dashboard() {
       )}
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <Kpi label="Clienti totali" value={data?.kpi.totalCustomers ?? 0} icon={Users} hint="diportisti" />
-        <Kpi label="Valore medio" value={`€${data?.kpi.avgLtv ?? 0}`} icon={DollarSign} hint="per cliente" />
-        <Kpi label="Clienti top" value={data?.kpi.champion ?? 0} icon={Crown} hint="campioni" tone="amber" />
-        <Kpi label="A rischio abbandono" value={data?.kpi.atRisk ?? 0} icon={AlertTriangle} hint="richiedono attenzione" tone="coral" />
+        <Kpi label="Clienti totali" numericValue={data?.kpi.totalCustomers ?? 0} icon={Users} hint="diportisti" />
+        <Kpi label="Valore medio" numericValue={data?.kpi.avgLtv ?? 0} prefix="€" icon={DollarSign} hint="per cliente" />
+        <Kpi label="Clienti top" numericValue={data?.kpi.champion ?? 0} icon={Crown} hint="campioni" tone="amber" />
+        <Kpi label="A rischio abbandono" numericValue={data?.kpi.atRisk ?? 0} icon={AlertTriangle} hint="richiedono attenzione" tone="coral" />
       </div>
+
 
       <div className="grid lg:grid-cols-3 gap-6">
         <div className="glow-card p-6 lg:col-span-2 space-y-4">
@@ -255,9 +257,8 @@ function Dashboard() {
   );
 }
 
-function Kpi({ label, value, icon: Icon, hint, tone, trend, spark }: { label: string; value: any; icon: any; hint: string; tone?: "amber" | "coral"; trend?: number; spark?: number[] }) {
+function Kpi({ label, numericValue, prefix, icon: Icon, hint, tone, trend, spark }: { label: string; numericValue: number; prefix?: string; icon: any; hint: string; tone?: "amber" | "coral"; trend?: number; spark?: number[] }) {
   const color = tone === "amber" ? "text-amber-400" : tone === "coral" ? "text-orange-400" : "text-primary";
-  // Deterministic decorative sparkline derived from the label so SSR/CSR match.
   const points = spark ?? (() => {
     const seed = [...label].reduce((s, c) => s + c.charCodeAt(0), 0);
     return Array.from({ length: 12 }, (_, i) => 0.3 + 0.5 * Math.abs(Math.sin(seed * 0.13 + i * 0.7)));
@@ -269,12 +270,14 @@ function Kpi({ label, value, icon: Icon, hint, tone, trend, spark }: { label: st
   const arrow = trend == null ? null : trend >= 0 ? "▲" : "▼";
   const trendColor = trend == null ? "" : trend >= 0 ? "text-emerald-400" : "text-orange-400";
   return (
-    <div className="glow-card p-5 space-y-2 hover:translate-y-[-2px] transition-transform">
+    <div className="glow-card lift p-5 space-y-2">
       <div className="flex items-center justify-between">
         <span className="text-xs text-muted-foreground uppercase tracking-wider">{label}</span>
         <Icon className={`size-4 ${color}`} />
       </div>
-      <p className={`text-3xl font-mono ${color}`}>{value}</p>
+      <p className={`text-3xl font-mono ${color}`}>
+        <CountUp value={numericValue} prefix={prefix ?? ""} />
+      </p>
       <div className="flex items-end justify-between gap-2">
         <p className="text-xs text-muted-foreground">{hint}</p>
         <svg viewBox="0 0 100 30" preserveAspectRatio="none" className="w-20 h-7 opacity-70">
@@ -289,4 +292,5 @@ function Kpi({ label, value, icon: Icon, hint, tone, trend, spark }: { label: st
     </div>
   );
 }
+
 

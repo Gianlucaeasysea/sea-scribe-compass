@@ -1,4 +1,4 @@
-import { createFileRoute, Outlet, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { AppShell } from "@/components/AppShell";
@@ -10,6 +10,7 @@ export const Route = createFileRoute("/_authenticated")({
 function AuthLayout() {
   const { session, loading } = useAuth();
   const navigate = useNavigate();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
 
   useEffect(() => {
     if (!loading && !session) navigate({ to: "/login" });
@@ -26,7 +27,10 @@ function AuthLayout() {
 
   return (
     <AppShell>
-      <Outlet />
+      <div key={pathname} className="animate-page-fade">
+        <Outlet />
+      </div>
     </AppShell>
   );
 }
+
