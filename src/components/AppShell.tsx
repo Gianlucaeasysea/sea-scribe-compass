@@ -49,8 +49,17 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   return (
     <div className="min-h-screen flex bg-background grid-bg">
-      <aside className="w-60 border-r border-border bg-surface/40 backdrop-blur flex flex-col">
-        <div className="p-5 flex flex-col items-start gap-2 border-b border-border">
+      <aside
+        className="w-[220px] shrink-0 flex flex-col"
+        style={{
+          background: "var(--bg-surface)",
+          borderRight: "1px solid var(--border-subtle)",
+        }}
+      >
+        <div
+          className="p-5 flex flex-col items-start gap-2"
+          style={{ borderBottom: "1px solid var(--border-subtle)" }}
+        >
           <img
             src="https://easysea.org/cdn/shop/files/Logo_Easysea_280x80_nero.png?v=1738336409&width=280"
             alt="Easysea"
@@ -60,7 +69,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             Marketing Intelligence
           </span>
         </div>
-        <nav className="flex-1 p-3 space-y-1">
+        <nav className="flex-1 p-2 space-y-0.5">
           {NAV.map((n) => {
             const active = loc.pathname.startsWith(n.to);
             const Icon = n.icon;
@@ -68,11 +77,21 @@ export function AppShell({ children }: { children: ReactNode }) {
               <Link
                 key={n.to}
                 to={n.to}
-                className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-all ${
+                className="group flex items-center gap-3 pl-3 pr-3 py-2.5 text-sm transition-all"
+                style={
                   active
-                    ? "bg-primary/15 text-primary border border-primary/30"
-                    : "text-muted-foreground hover:text-foreground hover:bg-surface-2"
-                }`}
+                    ? {
+                        borderLeft: "3px solid var(--brand-accent)",
+                        background: "var(--brand-accent-glow)",
+                        color: "var(--brand-accent)",
+                        paddingLeft: "calc(0.75rem - 3px)",
+                      }
+                    : {
+                        borderLeft: "3px solid transparent",
+                        color: "var(--text-secondary)",
+                        paddingLeft: "calc(0.75rem - 3px)",
+                      }
+                }
               >
                 <Icon className="size-4" />
                 <span className="flex-1">{n.label}</span>
@@ -81,13 +100,16 @@ export function AppShell({ children }: { children: ReactNode }) {
             );
           })}
         </nav>
-        <div className="p-3 border-t border-border space-y-2">
+        <div
+          className="p-3 space-y-2"
+          style={{ borderTop: "1px solid var(--border-subtle)" }}
+        >
           <button
             onClick={() => setCmdOpen(true)}
             className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-xs text-muted-foreground bg-surface-2 hover:text-foreground transition"
           >
             <Search className="size-3.5" />
-            <span className="flex-1 text-left">Search fleet</span>
+            <span className="flex-1 text-left">Cerca clienti</span>
             <kbd className="text-[10px] font-mono">⌘K</kbd>
           </button>
           <div className="flex items-center gap-2 px-2 py-1">
