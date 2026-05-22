@@ -106,10 +106,15 @@ async function shopifyFetch(path: string, stored?: Record<string, string>): Prom
     let res: Response | null = null;
     for (let attempt = 0; attempt < 5; attempt += 1) {
       const shopDomain = stored?.shop_domain || DEFAULT_SHOP_DOMAIN;
-      res = await fetch(`https://${shopDomain}/admin/api/${SHOPIFY_API_VERSION}/${path}`, {
-        headers: { "X-Shopify-Access-Token": token.value, "Content-Type": "application/json" },
-        signal: AbortSignal.timeout(5_000),
-      });
+      try {
+        res = await fetch(`https://${shopDomain}/admin/api/${SHOPIFY_API_VERSION}/${path}`, {
+          headers: { "X-Shopify-Access-Token": token.value, "Content-Type": "application/json" },
+          signal: AbortSignal.timeout(5_000),
+        });
+      } catch {
+        // Timeout/network abort — soft-fail so caller stops pagination without killing the whole sync
+        return { json: null, link: null, status: 408 };
+      }
       if (res.status !== 429) break;
       const retryAfter = Number(res.headers.get("retry-after") ?? "2");
       await sleep(Math.max(retryAfter, 1) * 1000 + attempt * 500);
