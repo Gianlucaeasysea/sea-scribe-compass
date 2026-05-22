@@ -392,7 +392,7 @@ export const syncFacebook = createServerFn({ method: "POST" })
       const insights = (json.data ?? []) as any[];
 
       // Distribute campaign spend evenly across known customers (proxy attribution).
-      const { data: custs } = await supabaseAdmin.from("customers").select("id").limit(500);
+      const { data: custs } = await supabaseAdmin.from("customers").select("id");
       const customers = (custs ?? []) as { id: string }[];
       if (!customers.length) {
         await markStatus("facebook", "Facebook Ads", true, 0, "0 events (no customers)");
@@ -403,7 +403,7 @@ export const syncFacebook = createServerFn({ method: "POST" })
       for (const ins of insights) {
         const totalSpend = Number(ins.spend ?? 0);
         const perCust = totalSpend / customers.length;
-        for (const c of customers.slice(0, 50)) {
+        for (const c of customers) {
           rows.push({
             customer_id: c.id,
             campaign_name: ins.campaign_name ?? "Unknown",
