@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { getCustomerProfile } from "@/lib/queries.functions";
 import { ArrowLeft, Mail, MapPin, Anchor, MessageCircle, TrendingDown, ShoppingBag } from "lucide-react";
+import { formatDate, formatEuro } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/customer/$id")({
   component: CustomerProfile,
@@ -57,7 +58,7 @@ function CustomerProfile() {
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Stat label="Lifetime value" value={`€${Math.round(c.lifetime_value).toLocaleString()}`} />
+        <Stat label="Lifetime value" value={formatEuro(Math.round(c.lifetime_value))} />
         <Stat label="Orders" value={c.total_orders} icon={ShoppingBag} />
         <Stat label="Email open rate" value={`${openRate}%`} icon={Mail} />
         <Stat label="Churn risk" value={`${data.rfm?.churn_risk ?? 0}%`} icon={TrendingDown} tone={data.rfm && data.rfm.churn_risk > 60 ? "coral" : undefined} />
@@ -77,7 +78,7 @@ function CustomerProfile() {
                     ))}
                   </div>
                   <p className="text-xs text-muted-foreground mt-1">
-                    {new Date(o.created_at).toLocaleDateString()} · {(Array.isArray(o.line_items) ? o.line_items : []).map((it: any) => it.name).join(", ")}
+                    {formatDate(o.created_at)} · {(Array.isArray(o.line_items) ? o.line_items : []).map((it: any) => it.name).join(", ")}
                   </p>
                 </div>
                 <div className="text-right">

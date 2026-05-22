@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { formatEuro } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   component: Dashboard,
@@ -107,7 +108,7 @@ function Dashboard() {
             <TrendingUp className="size-4 text-emerald-400" />
             <h3 className="font-semibold">Opportunity</h3>
           </div>
-          <p className="text-4xl font-mono text-emerald-400">€{(data?.kpi.opportunity ?? 0).toLocaleString()}</p>
+          <p className="text-4xl font-mono text-emerald-400">{formatEuro(data?.kpi.opportunity ?? 0)}</p>
           <p className="text-xs text-muted-foreground">
             Expected revenue across {data?.kpi.pendingActions ?? 0} pending action{(data?.kpi.pendingActions ?? 0) === 1 ? "" : "s"}.
           </p>
