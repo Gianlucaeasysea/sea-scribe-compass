@@ -45,7 +45,7 @@ function CustomerProfile() {
 
   const lastOrderAt = c.last_order_at ? new Date(c.last_order_at) : null;
   const daysSince = lastOrderAt
-    ? Math.max(0, Math.floor((Date.now() - lastOrderAt.getTime()) / 86_400_000))
+    ? Math.max(0, Math.floor((nowMs() - lastOrderAt.getTime()) / 86_400_000))
     : 999;
   const aiCustomer = {
     id: c.id,
