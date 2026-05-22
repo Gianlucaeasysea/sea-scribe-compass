@@ -13,29 +13,6 @@ import { ClientErrorReporter } from "@/components/client-error-reporter";
 
 import appCss from "../styles.css?url";
 
-
-export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
-  head: () => ({
-    meta: [
-      { charSet: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "SeaMarketing Hub — Easysea" },
-      { name: "description", content: "Marine marketing intelligence: 360° customer profiles and next-best actions." },
-      { name: "theme-color", content: "#0A0F1E" },
-    ],
-    links: [
-      { rel: "stylesheet", href: appCss },
-      { rel: "preconnect", href: "https://fonts.googleapis.com" },
-      { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "" },
-      { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" },
-    ],
-  }),
-  shellComponent: RootShell,
-  component: RootComponent,
-  notFoundComponent: GlobalNotFoundFallback,
-  errorComponent: GlobalErrorFallback,
-});
-
 function RootShell({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
@@ -62,3 +39,25 @@ function RootComponent() {
 
   );
 }
+
+export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
+  head: () => ({
+    meta: [
+      { charSet: "utf-8" },
+      { name: "viewport", content: "width=device-width, initial-scale=1" },
+      { title: "SeaMarketing Hub — Easysea" },
+      { name: "description", content: "Marine marketing intelligence: 360° customer profiles and next-best actions." },
+      { name: "theme-color", content: "#0A0F1E" },
+    ],
+    links: [
+      { rel: "stylesheet", href: appCss },
+      { rel: "preconnect", href: "https://fonts.googleapis.com" },
+      { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "" },
+      { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" },
+    ],
+  }),
+  shellComponent: RootShell,
+  component: RootComponent,
+  notFoundComponent: GlobalNotFoundFallback,
+  errorComponent: GlobalErrorFallback,
+});
