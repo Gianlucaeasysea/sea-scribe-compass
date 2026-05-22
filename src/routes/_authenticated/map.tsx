@@ -62,10 +62,10 @@ function FleetMap() {
   return (
     <div className="p-8 space-y-6 max-w-[1400px] mx-auto">
       <div>
-        <p className="font-mono text-xs text-primary tracking-widest">FLEET MAP</p>
-        <h1 className="text-3xl font-semibold mt-1">{total.toLocaleString()} sailors at a glance</h1>
+        <p className="font-mono text-xs text-primary tracking-widest">MAPPA CLIENTI</p>
+        <h1 className="text-3xl font-semibold mt-1">{total.toLocaleString()} clienti in vista</h1>
         <p className="text-muted-foreground text-sm mt-1">
-          Tier distribution, RFM positioning and revenue concentration — every customer in one screen.
+          Distribuzione geografica dei diportisti — segmenti, posizionamento RFM e concentrazione di valore in un'unica schermata.
         </p>
       </div>
 
@@ -75,7 +75,7 @@ function FleetMap() {
           <div className="relative flex-1 min-w-[200px]">
             <Search className="size-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
             <Input
-              placeholder="Search by name or email…"
+              placeholder="Cerca per nome o email..."
               value={q}
               onChange={(e) => setQ(e.target.value)}
               className="pl-9"
@@ -86,11 +86,11 @@ function FleetMap() {
           </span>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Chip label={`All · ${total.toLocaleString()}`} active={tier === null} onClick={() => setTier(null)} />
+          <Chip label={`Tutti · ${total.toLocaleString()}`} active={tier === null} onClick={() => setTier(null)} />
           {TIERS.map((t) => (
             <Chip
               key={t}
-              label={`${t} · ${(tierStats[t]?.count ?? 0).toLocaleString()}`}
+              label={`${tierIT(t)} · ${(tierStats[t]?.count ?? 0).toLocaleString()}`}
               active={tier === t}
               color={TIER_COLOR[t]}
               onClick={() => setTier(tier === t ? null : t)}
@@ -100,7 +100,7 @@ function FleetMap() {
         {allTags.length > 0 && (
           <div className="flex flex-wrap gap-2 items-center">
             <TagIcon className="size-3.5 text-muted-foreground" />
-            <Chip label="Any tag" active={tag === null} onClick={() => setTag(null)} />
+            <Chip label="Qualsiasi tag" active={tag === null} onClick={() => setTag(null)} />
             {allTags.map((t) => (
               <Chip key={t} label={t} active={tag === t} onClick={() => setTag(tag === t ? null : t)} />
             ))}
