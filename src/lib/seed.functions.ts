@@ -265,7 +265,7 @@ export const seedDemoData = createServerFn({ method: "POST" })
     // Bulk insert in chunks
     const chunk = async (table: string, rows: any[], size = 500) => {
       for (let i = 0; i < rows.length; i += size) {
-        const { error } = await supabase.from(table).insert(rows.slice(i, i + size));
+        const { error } = await (supabase.from(table as any) as any).insert(rows.slice(i, i + size));
         if (error) throw new Error(`${table}: ${error.message}`);
       }
     };
