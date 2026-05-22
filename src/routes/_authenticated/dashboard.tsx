@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { getDashboardData } from "@/lib/queries.functions";
+import { getDashboardData, refreshFleet } from "@/lib/queries.functions";
 import { seedDemoData } from "@/lib/seed.functions";
 import { syncShopify, syncKlaviyo, syncFacebook, syncCircle } from "@/lib/sync.functions";
 import { Link } from "@tanstack/react-router";
@@ -35,6 +35,7 @@ function Dashboard() {
   const klaviyoFn = useServerFn(syncKlaviyo);
   const facebookFn = useServerFn(syncFacebook);
   const circleFn = useServerFn(syncCircle);
+  const refreshFn = useServerFn(refreshFleet);
   const qc = useQueryClient();
   const { data, isLoading, isFetching } = useQuery({ queryKey: ["dashboard"], queryFn: () => fetch({}) });
   const seedMut = useMutation({
@@ -71,6 +72,10 @@ function Dashboard() {
       summary.klaviyo = k.status === "fulfilled" ? (k.value as any).message : (k.reason?.message ?? "failed");
       summary.facebook = f.status === "fulfilled" ? (f.value as any).message : (f.reason?.message ?? "failed");
       summary.circle = c.status === "fulfilled" ? (c.value as any).message : (c.reason?.message ?? "failed");
+      // Recompute LTV / RFM / recommendations / actions from real data
+      setSyncStep("rebuilding fleet intelligence");
+      const r = await refreshFn({});
+      summary.fleet = `${r.customers} customers · ${r.rfm} RFM · ${r.recommendations} recs · ${r.actions} actions`;
       return summary;
     },
     onSuccess: (summary) => {
@@ -80,6 +85,15 @@ function Dashboard() {
     },
     onError: (e: any) => toast.error(e.message?.slice(0, 200) ?? "Sync failed"),
     onSettled: () => setSyncStep(null),
+  });
+
+  const refreshMut = useMutation({
+    mutationFn: () => refreshFn({}),
+    onSuccess: (r) => {
+      toast.success(`Fleet updated · ${r.customers} customers · ${r.rfm} RFM · ${r.recommendations} recommendations`);
+      qc.invalidateQueries();
+    },
+    onError: (e: any) => toast.error(e.message?.slice(0, 200) ?? "Update failed"),
   });
 
   const empty = !isLoading && data && data.kpi.totalCustomers === 0;
@@ -102,6 +116,14 @@ function Dashboard() {
           >
             <Zap className={`size-4 mr-2 ${syncAllMut.isPending ? "animate-pulse" : ""}`} />
             {syncAllMut.isPending ? `Syncing ${syncStep ?? "…"}` : "Sync all sources"}
+          </Button>
+          <Button
+            onClick={() => refreshMut.mutate()}
+            disabled={refreshMut.isPending || syncAllMut.isPending}
+            variant="outline"
+          >
+            <Sparkles className={`size-4 mr-2 ${refreshMut.isPending ? "animate-pulse" : ""}`} />
+            {refreshMut.isPending ? "Updating fleet…" : "Update fleet"}
           </Button>
           <Button
             onClick={() => qc.invalidateQueries()}
