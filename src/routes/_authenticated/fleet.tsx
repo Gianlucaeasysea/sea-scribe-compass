@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { formatDate } from "@/lib/format";
-import { Tag, Plus, X } from "lucide-react";
+import { Tag, Plus, X, MessageCircle } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/fleet")({
@@ -24,6 +24,7 @@ function Fleet() {
   const [q, setQ] = useState("");
   const [tierFilter, setTierFilter] = useState<string | null>(null);
   const [tagFilter, setTagFilter] = useState<string | null>(null);
+  const [communityFilter, setCommunityFilter] = useState<"all" | "in" | "out">("all");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [newTag, setNewTag] = useState("");
 
@@ -33,12 +34,16 @@ function Fleet() {
     return Array.from(s).sort();
   }, [data]);
 
+  const inCommunity = (c: any) => !!c.circle_id || (c.tags ?? []).includes("circle-member");
+
   const rows = useMemo(() => {
     const list = data ?? [];
     const Q = q.toLowerCase();
     return list.filter((c: any) => {
       if (tierFilter && c.rfm?.tier !== tierFilter) return false;
       if (tagFilter && !(c.tags ?? []).includes(tagFilter)) return false;
+      if (communityFilter === "in" && !inCommunity(c)) return false;
+      if (communityFilter === "out" && inCommunity(c)) return false;
       if (!Q) return true;
       return (
         c.name?.toLowerCase().includes(Q) ||
@@ -46,7 +51,8 @@ function Fleet() {
         c.country?.toLowerCase().includes(Q)
       );
     });
-  }, [data, q, tierFilter, tagFilter]);
+  }, [data, q, tierFilter, tagFilter, communityFilter]);
+
 
   const tagMut = useMutation({
     mutationFn: (vars: { id: string; tags: string[] }) =>
@@ -93,6 +99,12 @@ function Fleet() {
             <Chip key={t} label={t} active={tierFilter === t} onClick={() => setTierFilter(t)} />
           ))}
         </div>
+        <div className="flex flex-wrap gap-2 items-center">
+          <MessageCircle className="size-3.5 text-muted-foreground" />
+          <Chip label="All" active={communityFilter === "all"} onClick={() => setCommunityFilter("all")} />
+          <Chip label="In Circle community" active={communityFilter === "in"} onClick={() => setCommunityFilter("in")} />
+          <Chip label="Not in community" active={communityFilter === "out"} onClick={() => setCommunityFilter("out")} />
+        </div>
         {allTags.length > 0 && (
           <div className="flex flex-wrap gap-2 items-center">
             <Tag className="size-3.5 text-muted-foreground" />
@@ -104,6 +116,7 @@ function Fleet() {
         )}
         <p className="text-xs text-muted-foreground">{rows.length} sailor{rows.length === 1 ? "" : "s"} matched</p>
       </div>
+
 
       <div className="glow-card overflow-hidden">
         <table className="w-full text-sm">
@@ -122,7 +135,14 @@ function Fleet() {
               <tr key={c.id} className="border-t border-border hover:bg-surface-2/40 transition align-top">
                 <td className="p-3">
                   <Link to="/customer/$id" params={{ id: c.id }} className="hover:text-primary">
-                    <p className="font-medium">{c.name}</p>
+                    <p className="font-medium flex items-center gap-1.5">
+                      {c.name}
+                      {inCommunity(c) && (
+                        <span title="In Circle community" className="inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded bg-purple-500/15 text-purple-300 border border-purple-500/40">
+                          <MessageCircle className="size-2.5" /> Circle
+                        </span>
+                      )}
+                    </p>
                     <p className="text-xs text-muted-foreground">{c.email}</p>
                     {(c.city || c.country) && (
                       <p className="text-[11px] text-muted-foreground">{[c.city, c.country].filter(Boolean).join(", ")}</p>
