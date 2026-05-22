@@ -135,8 +135,8 @@
   }
   .grid-bg {
     background-image:
-      linear-gradient(rgba(0, 197, 161, 0.04) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(0, 197, 161, 0.04) 1px, transparent 1px);
+      linear-gradient(rgba(204, 255, 0, 0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(204, 255, 0, 0.04) 1px, transparent 1px);
     background-size: 40px 40px;
   }
   .hex-pulse {
@@ -149,8 +149,9 @@
 
 @keyframes hex-pulse {
   0%, 100% { filter: drop-shadow(0 0 4px var(--brand-accent-glow)); }
-  50% { filter: drop-shadow(0 0 12px rgba(0, 197, 161, 0.6)); }
+  50% { filter: drop-shadow(0 0 12px rgba(204, 255, 0, 0.6)); }
 }
+
 
 @keyframes shimmer {
   0% { background-position: -1000px 0; }
