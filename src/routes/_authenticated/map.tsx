@@ -86,7 +86,7 @@ function FleetMap() {
           </span>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Chip label={`Tutti · ${total.toLocaleString()}`} active={tier === null} onClick={() => setTier(null)} />
+          <Chip label={`Tutti · ${formatNumber(total)}`} active={tier === null} onClick={() => setTier(null)} />
           {TIERS.map((t) => (
             <Chip
               key={t}
