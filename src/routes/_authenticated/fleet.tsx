@@ -1,13 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { getMapCustomers, updateCustomerTags } from "@/lib/queries.functions";
+import { getMapCustomers, updateCustomerTags, unifyCustomerProfiles } from "@/lib/queries.functions";
 import { useMemo, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { formatDate } from "@/lib/format";
-import { Tag, Plus, X, MessageCircle } from "lucide-react";
+import { Tag, Plus, X, MessageCircle, RefreshCw, ChevronLeft, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/fleet")({
@@ -15,10 +15,12 @@ export const Route = createFileRoute("/_authenticated/fleet")({
 });
 
 const TIERS = ["Champion", "Loyal", "Potential", "New", "At Risk", "Lost"];
+const PAGE_SIZE = 50;
 
 function Fleet() {
   const fetch = useServerFn(getMapCustomers);
   const updateTags = useServerFn(updateCustomerTags);
+  const unify = useServerFn(unifyCustomerProfiles);
   const qc = useQueryClient();
   const { data } = useQuery({ queryKey: ["map"], queryFn: () => fetch({}) });
   const [q, setQ] = useState("");
@@ -27,6 +29,7 @@ function Fleet() {
   const [communityFilter, setCommunityFilter] = useState<"all" | "in" | "out">("all");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [newTag, setNewTag] = useState("");
+  const [page, setPage] = useState(1);
 
   const allTags = useMemo(() => {
     const s = new Set<string>();
@@ -53,10 +56,35 @@ function Fleet() {
     });
   }, [data, q, tierFilter, tagFilter, communityFilter]);
 
+  const totalPages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
+  const safePage = Math.min(page, totalPages);
+  const pageRows = useMemo(
+    () => rows.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE),
+    [rows, safePage],
+  );
+
+  const refreshMut = useMutation({
+    mutationFn: () => unify({}),
+    onSuccess: (r: any) => {
+      const unmatched: string[] = [];
+      if (r.klaviyoOnly) unmatched.push(`${r.klaviyoOnly} Klaviyo`);
+      if (r.circleOnly) unmatched.push(`${r.circleOnly} Circle`);
+      toast.success(
+        `Unified ${r.shopify} Shopify · ${r.klaviyoMatched} Klaviyo · ${r.circleMatched} Circle · ${r.facebookMatched} Facebook`,
+        {
+          description: unmatched.length
+            ? `No Shopify match for: ${unmatched.join(", ")}`
+            : "Every connector profile matched a Shopify customer.",
+        },
+      );
+      qc.invalidateQueries({ queryKey: ["map"] });
+      qc.invalidateQueries({ queryKey: ["dashboard"] });
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
 
   const tagMut = useMutation({
-    mutationFn: (vars: { id: string; tags: string[] }) =>
-      updateTags({ data: vars }),
+    mutationFn: (vars: { id: string; tags: string[] }) => updateTags({ data: vars }),
     onSuccess: () => {
       toast.success("Tags updated");
       qc.invalidateQueries({ queryKey: ["map"] });
@@ -78,45 +106,56 @@ function Fleet() {
 
   return (
     <div className="p-8 space-y-6 max-w-7xl mx-auto">
-      <div>
-        <p className="font-mono text-xs text-primary tracking-widest">FLEET</p>
-        <h1 className="text-3xl font-semibold mt-1">All sailors</h1>
-        <p className="text-muted-foreground text-sm mt-1">
-          Unified profiles matched by email across Shopify, Klaviyo, Facebook & Circle.
-        </p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <p className="font-mono text-xs text-primary tracking-widest">FLEET</p>
+          <h1 className="text-3xl font-semibold mt-1">All sailors</h1>
+          <p className="text-muted-foreground text-sm mt-1">
+            Unified profiles matched by email across Shopify, Klaviyo, Facebook & Circle.
+          </p>
+        </div>
+        <Button
+          onClick={() => refreshMut.mutate()}
+          disabled={refreshMut.isPending}
+          className="shrink-0"
+        >
+          <RefreshCw className={`size-4 mr-2 ${refreshMut.isPending ? "animate-spin" : ""}`} />
+          {refreshMut.isPending ? "Refreshing…" : "Refresh & unify"}
+        </Button>
       </div>
 
       <div className="space-y-3">
         <Input
           placeholder="Search by name, email, country…"
           value={q}
-          onChange={(e) => setQ(e.target.value)}
+          onChange={(e) => { setQ(e.target.value); setPage(1); }}
           className="max-w-md"
         />
         <div className="flex flex-wrap gap-2">
-          <Chip label="All tiers" active={tierFilter === null} onClick={() => setTierFilter(null)} />
+          <Chip label="All tiers" active={tierFilter === null} onClick={() => { setTierFilter(null); setPage(1); }} />
           {TIERS.map((t) => (
-            <Chip key={t} label={t} active={tierFilter === t} onClick={() => setTierFilter(t)} />
+            <Chip key={t} label={t} active={tierFilter === t} onClick={() => { setTierFilter(t); setPage(1); }} />
           ))}
         </div>
         <div className="flex flex-wrap gap-2 items-center">
           <MessageCircle className="size-3.5 text-muted-foreground" />
-          <Chip label="All" active={communityFilter === "all"} onClick={() => setCommunityFilter("all")} />
-          <Chip label="In Circle community" active={communityFilter === "in"} onClick={() => setCommunityFilter("in")} />
-          <Chip label="Not in community" active={communityFilter === "out"} onClick={() => setCommunityFilter("out")} />
+          <Chip label="All" active={communityFilter === "all"} onClick={() => { setCommunityFilter("all"); setPage(1); }} />
+          <Chip label="In Circle community" active={communityFilter === "in"} onClick={() => { setCommunityFilter("in"); setPage(1); }} />
+          <Chip label="Not in community" active={communityFilter === "out"} onClick={() => { setCommunityFilter("out"); setPage(1); }} />
         </div>
         {allTags.length > 0 && (
           <div className="flex flex-wrap gap-2 items-center">
             <Tag className="size-3.5 text-muted-foreground" />
-            <Chip label="Any tag" active={tagFilter === null} onClick={() => setTagFilter(null)} />
+            <Chip label="Any tag" active={tagFilter === null} onClick={() => { setTagFilter(null); setPage(1); }} />
             {allTags.map((t) => (
-              <Chip key={t} label={t} active={tagFilter === t} onClick={() => setTagFilter(t)} />
+              <Chip key={t} label={t} active={tagFilter === t} onClick={() => { setTagFilter(t); setPage(1); }} />
             ))}
           </div>
         )}
-        <p className="text-xs text-muted-foreground">{rows.length} sailor{rows.length === 1 ? "" : "s"} matched</p>
+        <p className="text-xs text-muted-foreground">
+          {rows.length} sailor{rows.length === 1 ? "" : "s"} matched · page {safePage}/{totalPages}
+        </p>
       </div>
-
 
       <div className="glow-card overflow-hidden">
         <table className="w-full text-sm">
@@ -131,7 +170,7 @@ function Fleet() {
             </tr>
           </thead>
           <tbody>
-            {rows.slice(0, 300).map((c: any) => (
+            {pageRows.map((c: any) => (
               <tr key={c.id} className="border-t border-border hover:bg-surface-2/40 transition align-top">
                 <td className="p-3">
                   <Link to="/customer/$id" params={{ id: c.id }} className="hover:text-primary">
@@ -207,6 +246,23 @@ function Fleet() {
         </table>
         {rows.length === 0 && <p className="p-8 text-center text-muted-foreground text-sm">No sailors match these filters.</p>}
       </div>
+
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between text-xs text-muted-foreground">
+          <span>
+            Showing {(safePage - 1) * PAGE_SIZE + 1}–{Math.min(safePage * PAGE_SIZE, rows.length)} of {rows.length}
+          </span>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" disabled={safePage <= 1} onClick={() => setPage(safePage - 1)}>
+              <ChevronLeft className="size-3 mr-1" /> Prev
+            </Button>
+            <span className="font-mono">{safePage} / {totalPages}</span>
+            <Button variant="outline" size="sm" disabled={safePage >= totalPages} onClick={() => setPage(safePage + 1)}>
+              Next <ChevronRight className="size-3 ml-1" />
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
