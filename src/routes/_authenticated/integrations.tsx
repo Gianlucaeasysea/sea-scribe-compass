@@ -8,6 +8,7 @@ import {
   syncKlaviyo,
   syncFacebook,
   syncCircle,
+  syncZendesk,
   saveIntegrationCredentials,
 } from "@/lib/sync.functions";
 import { Button } from "@/components/ui/button";
