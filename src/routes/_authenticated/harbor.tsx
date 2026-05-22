@@ -15,9 +15,9 @@ function Harbor() {
   return (
     <div className="p-8 space-y-6 max-w-7xl mx-auto">
       <div>
-        <p className="font-mono text-xs text-primary tracking-widest">THE HARBOR</p>
-        <h1 className="text-3xl font-semibold mt-1">Saved segments</h1>
-        <p className="text-muted-foreground text-sm mt-1">Where your defined fleets drop anchor.</p>
+        <p className="font-mono text-xs text-primary tracking-widest">SEGMENTI</p>
+        <h1 className="text-3xl font-semibold mt-1">Segmenti clienti</h1>
+        <p className="text-muted-foreground text-sm mt-1">Le flotte di clienti che hai definito.</p>
       </div>
 
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -26,16 +26,21 @@ function Harbor() {
             <div className="flex items-start justify-between">
               <Layers className="size-5 text-primary" />
               <span className="font-mono text-xs text-muted-foreground">
-                ~{data?.tierCounts?.[s.name] ?? Math.floor((data?.totalCustomers ?? 0) / 6)} sailors
+                ~{(s.customer_count ?? data?.tierCounts?.[s.name] ?? 0).toLocaleString("it-IT")} clienti
               </span>
             </div>
             <h3 className="font-semibold mt-3">{s.name}</h3>
             <p className="text-xs text-muted-foreground mt-1">{s.description}</p>
+            {s.avg_ltv > 0 && (
+              <p className="text-[11px] text-primary mt-2 font-mono">
+                LTV medio €{Math.round(s.avg_ltv).toLocaleString("it-IT")}
+              </p>
+            )}
           </div>
         ))}
         {(!data?.segments || data.segments.length === 0) && (
           <p className="text-sm text-muted-foreground col-span-3 text-center py-12">
-            No segments yet. Load the demo fleet from The Bridge.
+            Nessun segmento. Carica la demo flotta dai Connettori.
           </p>
         )}
       </div>
