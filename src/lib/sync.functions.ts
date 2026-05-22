@@ -31,18 +31,54 @@ async function markStatus(
 }
 
 // ---------- Shopify ----------
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 async function shopifyFetch(path: string) {
   const token = process.env.SHOPIFY_ACCESS_TOKEN;
   if (!token) throw new Error("SHOPIFY_ACCESS_TOKEN not configured");
-  const res = await fetch(`https://${SHOP_DOMAIN}/admin/api/2025-07/${path}`, {
-    headers: { "X-Shopify-Access-Token": token, "Content-Type": "application/json" },
-  });
+  let res: Response | null = null;
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    res = await fetch(`https://${SHOP_DOMAIN}/admin/api/2025-07/${path}`, {
+      headers: { "X-Shopify-Access-Token": token, "Content-Type": "application/json" },
+    });
+    if (res.status !== 429) break;
+    const retryAfter = Number(res.headers.get("retry-after") ?? "1");
+    await sleep(Math.max(retryAfter, 1) * 1000);
+  }
+  if (!res) throw new Error(`Shopify ${path}: no response`);
   if (!res.ok) {
     const err: any = new Error(`Shopify ${path}: ${res.status} ${await res.text()}`);
     err.status = res.status;
     throw err;
   }
-  return res.json();
+  return { json: await res.json(), link: res.headers.get("link") };
+}
+
+function getNextShopifyPath(linkHeader: string | null) {
+  const nextLink = linkHeader?.split(",").find((part) => part.includes('rel="next"'));
+  const match = nextLink?.match(/<([^>]+)>/);
+  if (!match) return null;
+  const url = new URL(match[1]);
+  return `${url.pathname.split("/admin/api/2025-07/")[1]}${url.search}`;
+}
+
+async function fetchAllShopifyRecords<T>(initialPath: string, key: string) {
+  const records: T[] = [];
+  let nextPath: string | null = initialPath;
+  while (nextPath) {
+    const { json, link } = await shopifyFetch(nextPath);
+    records.push(...((json[key] ?? []) as T[]));
+    nextPath = getNextShopifyPath(link);
+  }
+  return records;
+}
+
+async function upsertInBatches(table: string, rows: any[], onConflict: string, size = 500) {
+  for (let i = 0; i < rows.length; i += size) {
+    await supabaseAdmin.from(table).upsert(rows.slice(i, i + size), { onConflict });
+  }
 }
 
 export const syncShopify = createServerFn({ method: "POST" })
@@ -52,8 +88,7 @@ export const syncShopify = createServerFn({ method: "POST" })
       let customers: any[] = [];
       let customersBlocked = false;
       try {
-        const customersJson = await shopifyFetch("customers.json?limit=250");
-        customers = (customersJson.customers ?? []) as any[];
+        customers = await fetchAllShopifyRecords<any>("customers.json?limit=250", "customers");
       } catch (err: any) {
         if (err?.status === 403) customersBlocked = true;
         else throw err;
@@ -62,8 +97,7 @@ export const syncShopify = createServerFn({ method: "POST" })
       let orders: any[] = [];
       let ordersBlocked = false;
       try {
-        const ordersJson = await shopifyFetch("orders.json?status=any&limit=250");
-        orders = (ordersJson.orders ?? []) as any[];
+        orders = await fetchAllShopifyRecords<any>("orders.json?status=any&limit=250", "orders");
       } catch (err: any) {
         if (err?.status === 403) ordersBlocked = true;
         else throw err;
@@ -93,15 +127,17 @@ export const syncShopify = createServerFn({ method: "POST" })
       }));
 
       if (customerRows.length) {
-        await supabaseAdmin.from("customers").upsert(customerRows, { onConflict: "shopify_id" });
+        await upsertInBatches("customers", customerRows, "shopify_id");
       }
 
-      const { data: mapped } = customerRows.length
-        ? await supabaseAdmin
-            .from("customers")
-            .select("id, shopify_id")
-            .in("shopify_id", customerRows.map((c) => c.shopify_id))
-        : { data: [] as { id: string; shopify_id: string }[] };
+      const mapped: { id: string; shopify_id: string }[] = [];
+      for (let i = 0; i < customerRows.length; i += 500) {
+        const { data } = await supabaseAdmin
+          .from("customers")
+          .select("id, shopify_id")
+          .in("shopify_id", customerRows.slice(i, i + 500).map((c) => c.shopify_id));
+        mapped.push(...(data ?? []));
+      }
       const idMap = new Map((mapped ?? []).map((m) => [m.shopify_id, m.id]));
 
       const orderRows = orders
@@ -120,7 +156,7 @@ export const syncShopify = createServerFn({ method: "POST" })
         }));
 
       if (orderRows.length) {
-        await supabaseAdmin.from("orders").upsert(orderRows, { onConflict: "shopify_order_id" });
+        await upsertInBatches("orders", orderRows, "shopify_order_id");
       }
 
       const warnings: string[] = [];
