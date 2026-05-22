@@ -8,6 +8,57 @@ const SHOPIFY_API_VERSION = "2025-07";
 const SHOPIFY_PAGE_LIMIT = 50;
 const SHOPIFY_MAX_PAGES = 1;
 
+type IntegrationId = "shopify" | "klaviyo" | "facebook" | "circle";
+
+async function loadCredentials(id: IntegrationId): Promise<Record<string, string>> {
+  const { data } = await (supabaseAdmin as any)
+    .from("credentials_config")
+    .select("credentials")
+    .eq("id", id)
+    .maybeSingle();
+  const creds = (data?.credentials ?? {}) as Record<string, string>;
+  return creds;
+}
+
+export const getIntegrationCredentials = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { id: IntegrationId }) => input)
+  .handler(async ({ data }) => {
+    const credentials = await loadCredentials(data.id);
+    // Return only keys (mask values) so the UI knows what's configured without exposing secrets
+    const configured = Object.fromEntries(
+      Object.entries(credentials).map(([k, v]) => [k, v ? "•".repeat(Math.min(8, String(v).length)) : ""]),
+    );
+    return { id: data.id, configured, hasAny: Object.values(credentials).some(Boolean) };
+  });
+
+export const saveIntegrationCredentials = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { id: IntegrationId; credentials: Record<string, string> }) => {
+    if (!input?.id) throw new Error("Missing integration id");
+    if (!input.credentials || typeof input.credentials !== "object") {
+      throw new Error("Missing credentials");
+    }
+    // Strip empty values so we don't overwrite existing keys with blanks
+    const clean: Record<string, string> = {};
+    for (const [k, v] of Object.entries(input.credentials)) {
+      if (typeof v === "string" && v.trim()) clean[k.trim()] = v.trim();
+    }
+    return { id: input.id, credentials: clean };
+  })
+  .handler(async ({ data }) => {
+    const existing = await loadCredentials(data.id);
+    const merged = { ...existing, ...data.credentials };
+    const { error } = await (supabaseAdmin as any)
+      .from("credentials_config")
+      .upsert(
+        { id: data.id, credentials: merged, updated_at: new Date().toISOString() },
+        { onConflict: "id" },
+      );
+    if (error) throw new Error(error.message);
+    return { ok: true, id: data.id, keys: Object.keys(merged) };
+  });
+
 async function markStatus(
   id: string,
   name: string,
@@ -37,18 +88,19 @@ function sleep(ms: number) {
 
 type ShopifyResult = { json: any; link: string | null; status: number };
 
-function getShopifyTokens() {
+function getShopifyTokens(stored?: Record<string, string>) {
   const tokens = [
+    { name: "stored.access_token", value: stored?.access_token },
     { name: "SHOPIFY_ACCESS_TOKEN", value: process.env.SHOPIFY_ACCESS_TOKEN },
     { name: "SHOPIFY_CUSTOM_ADMIN_TOKEN", value: process.env.SHOPIFY_CUSTOM_ADMIN_TOKEN },
   ].filter((item): item is { name: string; value: string } => Boolean(item.value));
-
   return tokens.filter((token, index, all) => all.findIndex((item) => item.value === token.value) === index);
 }
 
-async function shopifyFetch(path: string): Promise<ShopifyResult> {
-  const tokens = getShopifyTokens();
-  if (!tokens.length) throw new Error("SHOPIFY_ACCESS_TOKEN or SHOPIFY_CUSTOM_ADMIN_TOKEN not configured");
+async function shopifyFetch(path: string, stored?: Record<string, string>): Promise<ShopifyResult> {
+  const tokens = getShopifyTokens(stored);
+  if (!tokens.length) return { json: null, link: null, status: 401 };
+
 
   let authFailureStatus: number | null = null;
   for (const token of tokens) {
@@ -89,12 +141,12 @@ function getNextShopifyPath(linkHeader: string | null) {
   return `${url.pathname.split(`/admin/api/${SHOPIFY_API_VERSION}/`)[1]}${url.search}`;
 }
 
-async function fetchAllShopifyRecords<T>(initialPath: string, key: string): Promise<{ records: T[]; blockedStatus: number | null; capped: boolean }> {
+async function fetchAllShopifyRecords<T>(initialPath: string, key: string, stored?: Record<string, string>): Promise<{ records: T[]; blockedStatus: number | null; capped: boolean }> {
   const records: T[] = [];
   let nextPath: string | null = initialPath;
   let pages = 0;
   while (nextPath && pages < SHOPIFY_MAX_PAGES) {
-    const result = await shopifyFetch(nextPath);
+    const result = await shopifyFetch(nextPath, stored);
     if (result.json === null) return { records, blockedStatus: result.status, capped: false };
     records.push(...((result.json[key] ?? []) as T[]));
     nextPath = getNextShopifyPath(result.link);
@@ -118,10 +170,18 @@ export const syncShopify = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async () => {
     try {
+      const stored = await loadCredentials("shopify");
+      const hasToken = Boolean(stored.access_token || process.env.SHOPIFY_ACCESS_TOKEN || process.env.SHOPIFY_CUSTOM_ADMIN_TOKEN);
+      if (!hasToken) {
+        const msg = "Shopify API token not configured. Click Connect to add your credentials.";
+        await markStatus("shopify", "Shopify", false, 0, msg);
+        return { ok: false, message: msg };
+      }
+
       // 1. Verifica connessione: shop.json richiede solo accesso base.
-      const shopProbe = await shopifyFetch("shop.json");
+      const shopProbe = await shopifyFetch("shop.json", stored);
       if (shopProbe.status === 401) {
-        const msg = "Token Shopify non valido o scaduto (401). Controlla SHOPIFY_CUSTOM_ADMIN_TOKEN.";
+        const msg = "Token Shopify non valido o scaduto (401). Aggiorna le credenziali.";
         await markStatus("shopify", "Shopify", false, 0, msg);
         return { ok: false, message: msg };
       }
@@ -132,14 +192,14 @@ export const syncShopify = createServerFn({ method: "POST" })
       }
 
       // 2. Conteggio prodotti (read_products è di solito concesso).
-      const productsProbe = await shopifyFetch("products/count.json");
+      const productsProbe = await shopifyFetch("products/count.json", stored);
       const productCount: number | null = productsProbe.json?.count ?? null;
 
       // 3. Clienti e ordini — se bloccati da scope, non far fallire tutto.
       // Sequenziale + delay per rispettare il limite 2 req/sec di Shopify
-      const customersResult = await fetchAllShopifyRecords<any>(`customers.json?limit=${SHOPIFY_PAGE_LIMIT}`, "customers");
+      const customersResult = await fetchAllShopifyRecords<any>(`customers.json?limit=${SHOPIFY_PAGE_LIMIT}`, "customers", stored);
       await sleep(600);
-      const ordersResult = await fetchAllShopifyRecords<any>(`orders.json?status=any&limit=${SHOPIFY_PAGE_LIMIT}`, "orders");
+      const ordersResult = await fetchAllShopifyRecords<any>(`orders.json?status=any&limit=${SHOPIFY_PAGE_LIMIT}`, "orders", stored);
 
       
       let customers = customersResult.records;
@@ -231,8 +291,13 @@ export const syncKlaviyo = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async () => {
     try {
-      const key = process.env.KLAVIYO_API_KEY;
-      if (!key) throw new Error("KLAVIYO_API_KEY not configured");
+      const stored = await loadCredentials("klaviyo");
+      const key = stored.api_key || process.env.KLAVIYO_API_KEY;
+      if (!key) {
+        const msg = "Klaviyo API key not configured. Click Connect to add your credentials.";
+        await markStatus("klaviyo", "Klaviyo", false, 0, msg);
+        return { ok: false, message: msg };
+      }
 
       // Pull recent metric events (opens + clicks). Klaviyo has separate metric IDs per account,
       // so we query the global events endpoint and filter client-side by metric name.
@@ -306,9 +371,14 @@ export const syncFacebook = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async () => {
     try {
-      const token = process.env.FACEBOOK_ADS_ACCESS_TOKEN;
-      const acct = process.env.FACEBOOK_AD_ACCOUNT_ID;
-      if (!token || !acct) throw new Error("Facebook Ads env vars missing");
+      const stored = await loadCredentials("facebook");
+      const token = stored.access_token || process.env.FACEBOOK_ADS_ACCESS_TOKEN;
+      const acct = stored.ad_account_id || process.env.FACEBOOK_AD_ACCOUNT_ID;
+      if (!token || !acct) {
+        const msg = "Facebook Ads credentials not configured. Click Connect to add access_token and ad_account_id.";
+        await markStatus("facebook", "Facebook Ads", false, 0, msg);
+        return { ok: false, message: msg };
+      }
       const acctId = acct.startsWith("act_") ? acct : `act_${acct}`;
 
       // Aggregate spend per campaign for last 30 days
@@ -357,9 +427,14 @@ export const syncCircle = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async () => {
     try {
-      const token = process.env.CIRCLE_API_TOKEN;
-      const community = process.env.CIRCLE_COMMUNITY_ID;
-      if (!token || !community) throw new Error("Circle env vars missing");
+      const stored = await loadCredentials("circle");
+      const token = stored.api_token || process.env.CIRCLE_API_TOKEN;
+      const community = stored.community_id || process.env.CIRCLE_COMMUNITY_ID;
+      if (!token || !community) {
+        const msg = "Circle credentials not configured. Click Connect to add api_token and community_id.";
+        await markStatus("circle", "Circle", false, 0, msg);
+        return { ok: false, message: msg };
+      }
 
       const res = await fetch(
         `https://app.circle.so/api/v1/community_members?community_id=${community}&per_page=100`,
