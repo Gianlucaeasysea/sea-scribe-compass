@@ -164,3 +164,21 @@ export const searchCustomers = createServerFn({ method: "GET" })
       .limit(8);
     return rows ?? [];
   });
+
+export const updateCustomerTags = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) =>
+    z.object({
+      id: z.string().uuid(),
+      tags: z.array(z.string().min(1).max(40)).max(30),
+    }).parse(input),
+  )
+  .handler(async ({ context, data }) => {
+    const clean = Array.from(new Set(data.tags.map((t) => t.trim()).filter(Boolean)));
+    const { error } = await context.supabase
+      .from("customers")
+      .update({ tags: clean })
+      .eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true, tags: clean };
+  });
