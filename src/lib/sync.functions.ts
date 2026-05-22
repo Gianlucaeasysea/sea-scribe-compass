@@ -131,11 +131,11 @@ export const syncShopify = createServerFn({ method: "POST" })
       const productCount: number | null = productsProbe.json?.count ?? null;
 
       // 3. Clienti e ordini — se bloccati da scope, non far fallire tutto.
-      const customersResult = await fetchAllShopifyRecords<any>("customers.json?limit=250", "customers");
+      const customersResult = await fetchAllShopifyRecords<any>(`customers.json?limit=${SHOPIFY_PAGE_LIMIT}`, "customers");
       let customers = customersResult.records;
       const customersBlocked = customersResult.blockedStatus !== null;
 
-      const ordersResult = await fetchAllShopifyRecords<any>("orders.json?status=any&limit=250", "orders");
+      const ordersResult = await fetchAllShopifyRecords<any>(`orders.json?status=any&limit=${SHOPIFY_PAGE_LIMIT}`, "orders");
       const orders = ordersResult.records;
       const ordersBlocked = ordersResult.blockedStatus !== null;
 
@@ -201,6 +201,7 @@ export const syncShopify = createServerFn({ method: "POST" })
       const warnings: string[] = [];
       if (customersBlocked) warnings.push("clienti bloccati (manca scope read_customers)");
       if (ordersBlocked) warnings.push("ordini bloccati (manca scope read_orders)");
+      if (customersResult.capped || ordersResult.capped) warnings.push("sync parziale anti-timeout, rilancia per continuare");
       const hint = warnings.length
         ? ` — ${warnings.join("; ")}. Abilita 'Protected customer data' nell'app Shopify per importarli.`
         : "";
