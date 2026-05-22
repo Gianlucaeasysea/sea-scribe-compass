@@ -242,12 +242,12 @@ function RfmScatter({
     <div className="glow-card p-5 space-y-2">
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div>
-          <h3 className="font-semibold">RFM positioning</h3>
+          <h3 className="font-semibold">Posizionamento RFM</h3>
           <p className="text-xs text-muted-foreground">
-            X = days since last order · Y = lifetime value (log) · color = tier · size = LTV
+            X = giorni dall'ultimo ordine · Y = valore lifetime (log) · colore = segmento · dimensione = valore
           </p>
         </div>
-        <span className="text-xs font-mono text-muted-foreground">{points.length.toLocaleString()} dots</span>
+        <span className="text-xs font-mono text-muted-foreground">{points.length.toLocaleString()} clienti</span>
       </div>
       <div className="w-full overflow-x-auto">
         <svg
