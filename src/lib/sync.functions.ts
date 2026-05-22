@@ -298,22 +298,26 @@ export const syncKlaviyo = createServerFn({ method: "POST" })
         return { ok: false, message: msg };
       }
 
-      // Pull recent metric events (opens + clicks). Klaviyo has separate metric IDs per account,
-      // so we query the global events endpoint and filter client-side by metric name.
-      const res = await fetch(
-        "https://a.klaviyo.com/api/events/?page[size]=100&sort=-datetime&include=metric,profile",
-        {
+      const allEvents: any[] = [];
+      const allIncluded: any[] = [];
+      let nextUrl: string | null =
+        "https://a.klaviyo.com/api/events/?page[size]=100&sort=-datetime&include=metric,profile";
+      let page = 0;
+      while (nextUrl && page < 10) {
+        const res = await fetch(nextUrl, {
           headers: {
             Authorization: `Klaviyo-API-Key ${key}`,
             accept: "application/vnd.api+json",
             revision: "2024-10-15",
           },
-        },
-      );
-      if (!res.ok) throw new Error(`Klaviyo ${res.status}: ${await res.text()}`);
-      const json = await res.json();
-      const events = (json.data ?? []) as any[];
-      const included = (json.included ?? []) as any[];
+        });
+        if (!res.ok) throw new Error(`Klaviyo ${res.status}: ${await res.text()}`);
+        const json = await res.json();
+        allEvents.push(...(json.data ?? []));
+        allIncluded.push(...(json.included ?? []));
+        nextUrl = json.links?.next ?? null;
+        page++;
+      }
 
       const metricById = new Map(
         included.filter((i) => i.type === "metric").map((m) => [m.id, m.attributes?.name ?? ""]),
