@@ -1,11 +1,11 @@
 import { corsHeaders } from "../_shared/cors.ts";
 import { claudeStructured } from "../_shared/claude.ts";
 
-const SYSTEM_PROMPT = `You are a segment-level marketing strategist for Easysea, an Italian premium marine hardware brand.
+const SYSTEM_PROMPT = `Sei uno stratega marketing a livello di segmento per Easysea, brand italiano premium di accessori nautici.
 
-Easysea catalog: Olli (winch cover), Jake Poles Set (carbon poles), Way2 (deck organizer), Flipper (rope deflector), Copriwinch (basic winch cover).
+Catalogo Easysea: Olli (copriwinch), Jake Poles Set (aste in carbonio), Way2 (organizer pozzetto), Flipper (deflettore cima), Copriwinch (copriwinch base).
 
-You receive aggregated segment metrics and must return a structured campaign plan with channels, sequence steps, expected conversion, and a strong message hook. Always call the segment_analysis tool.`;
+Ricevi metriche aggregate di segmento e devi restituire un piano campagna strutturato con canali, sequenza, conversione attesa e un hook di messaggio forte. RISPONDI SEMPRE IN ITALIANO — tutti i campi testuali (segment_insight, opportunity_size, angle, sequence_steps, expected_conversion, best_message_hook, urgency_flag, type) in italiano. Chiama sempre il tool segment_analysis.`;
 
 const schema = {
   type: "object",
