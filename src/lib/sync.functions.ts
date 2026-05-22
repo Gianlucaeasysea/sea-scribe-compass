@@ -8,6 +8,57 @@ const SHOPIFY_API_VERSION = "2025-07";
 const SHOPIFY_PAGE_LIMIT = 50;
 const SHOPIFY_MAX_PAGES = 1;
 
+type IntegrationId = "shopify" | "klaviyo" | "facebook" | "circle";
+
+async function loadCredentials(id: IntegrationId): Promise<Record<string, string>> {
+  const { data } = await (supabaseAdmin as any)
+    .from("credentials_config")
+    .select("credentials")
+    .eq("id", id)
+    .maybeSingle();
+  const creds = (data?.credentials ?? {}) as Record<string, string>;
+  return creds;
+}
+
+export const getIntegrationCredentials = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { id: IntegrationId }) => input)
+  .handler(async ({ data }) => {
+    const credentials = await loadCredentials(data.id);
+    // Return only keys (mask values) so the UI knows what's configured without exposing secrets
+    const configured = Object.fromEntries(
+      Object.entries(credentials).map(([k, v]) => [k, v ? "•".repeat(Math.min(8, String(v).length)) : ""]),
+    );
+    return { id: data.id, configured, hasAny: Object.values(credentials).some(Boolean) };
+  });
+
+export const saveIntegrationCredentials = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { id: IntegrationId; credentials: Record<string, string> }) => {
+    if (!input?.id) throw new Error("Missing integration id");
+    if (!input.credentials || typeof input.credentials !== "object") {
+      throw new Error("Missing credentials");
+    }
+    // Strip empty values so we don't overwrite existing keys with blanks
+    const clean: Record<string, string> = {};
+    for (const [k, v] of Object.entries(input.credentials)) {
+      if (typeof v === "string" && v.trim()) clean[k.trim()] = v.trim();
+    }
+    return { id: input.id, credentials: clean };
+  })
+  .handler(async ({ data }) => {
+    const existing = await loadCredentials(data.id);
+    const merged = { ...existing, ...data.credentials };
+    const { error } = await (supabaseAdmin as any)
+      .from("credentials_config")
+      .upsert(
+        { id: data.id, credentials: merged, updated_at: new Date().toISOString() },
+        { onConflict: "id" },
+      );
+    if (error) throw new Error(error.message);
+    return { ok: true, id: data.id, keys: Object.keys(merged) };
+  });
+
 async function markStatus(
   id: string,
   name: string,
