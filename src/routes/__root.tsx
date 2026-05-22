@@ -47,7 +47,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "SeaMarketing" },
       { name: "description", content: "Tide Intelligence reconstructs customer profiles from integrated data to suggest precise marketing actions." },
-      { name: "theme-color", content: "#0B0F1A" },
+      { name: "theme-color", content: "#000000" },
       { property: "og:title", content: "SeaMarketing" },
       { name: "twitter:title", content: "SeaMarketing" },
       { property: "og:description", content: "Tide Intelligence reconstructs customer profiles from integrated data to suggest precise marketing actions." },
