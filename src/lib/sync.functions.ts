@@ -37,7 +37,11 @@ async function shopifyFetch(path: string) {
   const res = await fetch(`https://${SHOP_DOMAIN}/admin/api/2025-07/${path}`, {
     headers: { "X-Shopify-Access-Token": token, "Content-Type": "application/json" },
   });
-  if (!res.ok) throw new Error(`Shopify ${path}: ${res.status} ${await res.text()}`);
+  if (!res.ok) {
+    const err: any = new Error(`Shopify ${path}: ${res.status} ${await res.text()}`);
+    err.status = res.status;
+    throw err;
+  }
   return res.json();
 }
 
@@ -45,8 +49,35 @@ export const syncShopify = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async () => {
     try {
-      const customersJson = await shopifyFetch("customers.json?limit=250");
-      const customers = (customersJson.customers ?? []) as any[];
+      let customers: any[] = [];
+      let customersBlocked = false;
+      try {
+        const customersJson = await shopifyFetch("customers.json?limit=250");
+        customers = (customersJson.customers ?? []) as any[];
+      } catch (err: any) {
+        if (err?.status === 403) customersBlocked = true;
+        else throw err;
+      }
+
+      let orders: any[] = [];
+      let ordersBlocked = false;
+      try {
+        const ordersJson = await shopifyFetch("orders.json?status=any&limit=250");
+        orders = (ordersJson.orders ?? []) as any[];
+      } catch (err: any) {
+        if (err?.status === 403) ordersBlocked = true;
+        else throw err;
+      }
+
+      // Fallback: derive customers from orders when customers API is blocked
+      if (customersBlocked && orders.length) {
+        const seen = new Map<string, any>();
+        for (const o of orders) {
+          const c = o.customer;
+          if (c?.id && !seen.has(String(c.id))) seen.set(String(c.id), c);
+        }
+        customers = [...seen.values()];
+      }
 
       const customerRows = customers.map((c) => ({
         shopify_id: String(c.id),
@@ -65,16 +96,14 @@ export const syncShopify = createServerFn({ method: "POST" })
         await supabaseAdmin.from("customers").upsert(customerRows, { onConflict: "shopify_id" });
       }
 
-      // Map shopify_id -> uuid
-      const { data: mapped } = await supabaseAdmin
-        .from("customers")
-        .select("id, shopify_id")
-        .in("shopify_id", customerRows.map((c) => c.shopify_id));
+      const { data: mapped } = customerRows.length
+        ? await supabaseAdmin
+            .from("customers")
+            .select("id, shopify_id")
+            .in("shopify_id", customerRows.map((c) => c.shopify_id))
+        : { data: [] as { id: string; shopify_id: string }[] };
       const idMap = new Map((mapped ?? []).map((m) => [m.shopify_id, m.id]));
 
-      // Orders
-      const ordersJson = await shopifyFetch("orders.json?status=any&limit=250");
-      const orders = (ordersJson.orders ?? []) as any[];
       const orderRows = orders
         .filter((o) => o.customer?.id && idMap.has(String(o.customer.id)))
         .map((o) => ({
@@ -94,8 +123,13 @@ export const syncShopify = createServerFn({ method: "POST" })
         await supabaseAdmin.from("orders").upsert(orderRows, { onConflict: "shopify_order_id" });
       }
 
-      const msg = `${customerRows.length} customers · ${orderRows.length} orders`;
-      await markStatus("shopify", "Shopify", true, customerRows.length + orderRows.length, msg);
+      const warnings: string[] = [];
+      if (customersBlocked) warnings.push("scope read_customers non approvato");
+      if (ordersBlocked) warnings.push("scope read_orders non approvato");
+      const base = `${customerRows.length} customers · ${orderRows.length} orders`;
+      const msg = warnings.length ? `${base} — ${warnings.join("; ")} (richiedi 'Protected customer data' nell'app Shopify)` : base;
+      const connected = !(customersBlocked && ordersBlocked);
+      await markStatus("shopify", "Shopify", connected, customerRows.length + orderRows.length, msg);
       return { ok: true, message: msg };
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Unknown error";
