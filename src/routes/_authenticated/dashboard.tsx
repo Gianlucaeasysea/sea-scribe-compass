@@ -72,6 +72,10 @@ function Dashboard() {
       summary.klaviyo = k.status === "fulfilled" ? (k.value as any).message : (k.reason?.message ?? "failed");
       summary.facebook = f.status === "fulfilled" ? (f.value as any).message : (f.reason?.message ?? "failed");
       summary.circle = c.status === "fulfilled" ? (c.value as any).message : (c.reason?.message ?? "failed");
+      // Recompute LTV / RFM / recommendations / actions from real data
+      setSyncStep("rebuilding fleet intelligence");
+      const r = await refreshFn({});
+      summary.fleet = `${r.customers} customers · ${r.rfm} RFM · ${r.recommendations} recs · ${r.actions} actions`;
       return summary;
     },
     onSuccess: (summary) => {
@@ -81,6 +85,15 @@ function Dashboard() {
     },
     onError: (e: any) => toast.error(e.message?.slice(0, 200) ?? "Sync failed"),
     onSettled: () => setSyncStep(null),
+  });
+
+  const refreshMut = useMutation({
+    mutationFn: () => refreshFn({}),
+    onSuccess: (r) => {
+      toast.success(`Fleet updated · ${r.customers} customers · ${r.rfm} RFM · ${r.recommendations} recommendations`);
+      qc.invalidateQueries();
+    },
+    onError: (e: any) => toast.error(e.message?.slice(0, 200) ?? "Update failed"),
   });
 
   const empty = !isLoading && data && data.kpi.totalCustomers === 0;
