@@ -8,6 +8,7 @@ import {
   syncKlaviyo,
   syncFacebook,
   syncCircle,
+  syncZendesk,
   saveIntegrationCredentials,
 } from "@/lib/sync.functions";
 import { Button } from "@/components/ui/button";
@@ -29,13 +30,14 @@ export const Route = createFileRoute("/_authenticated/integrations")({
   component: Integrations,
 });
 
-type IntegrationId = "shopify" | "klaviyo" | "facebook" | "circle";
+type IntegrationId = "shopify" | "klaviyo" | "facebook" | "circle" | "zendesk";
 
 const META: Record<IntegrationId, { color: string; desc: string }> = {
   shopify: { color: "#96BF48", desc: "Orders, products, customers" },
   klaviyo: { color: "#FF6B35", desc: "Email opens, clicks, flows" },
   facebook: { color: "#1877F2", desc: "Ad spend, audiences, conversions" },
   circle: { color: "#9333EA", desc: "Community posts & engagement" },
+  zendesk: { color: "#03363D", desc: "Support tickets & satisfaction" },
 };
 
 type FieldDef = { key: string; label: string; placeholder?: string; type?: string; defaultValue?: string };
@@ -79,6 +81,16 @@ const CREDENTIAL_FORMS: Record<IntegrationId, {
       { key: "community_id", label: "Community ID", placeholder: "12345" },
     ],
   },
+  zendesk: {
+    title: "Connect Zendesk",
+    description: "Enter your Zendesk API credentials",
+    help: "Find these in Zendesk Admin Center → Apps and integrations → APIs → Zendesk API → Settings.",
+    fields: [
+      { key: "subdomain", label: "Subdomain", placeholder: "easysea" },
+      { key: "email", label: "Admin email", placeholder: "admin@yourstore.com" },
+      { key: "api_token", label: "API token", placeholder: "xxx...", type: "password" },
+    ],
+  },
 };
 
 function Integrations() {
@@ -91,6 +103,7 @@ function Integrations() {
     klaviyo: useServerFn(syncKlaviyo),
     facebook: useServerFn(syncFacebook),
     circle: useServerFn(syncCircle),
+    zendesk: useServerFn(syncZendesk),
   } as const;
 
   const saveCreds = useServerFn(saveIntegrationCredentials);
