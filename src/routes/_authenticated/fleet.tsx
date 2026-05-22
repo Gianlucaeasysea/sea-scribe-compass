@@ -257,7 +257,7 @@ function Fleet() {
                     )}
                   </div>
                 </td>
-                <td className="p-3 text-right font-mono">€{Math.round(c.lifetime_value)}</td>
+                <td className="p-3 text-right font-mono text-primary">{formatEuro(Math.round(c.lifetime_value))}</td>
                 <td className="p-3 text-right font-mono text-muted-foreground">{c.total_orders}</td>
                 <td className="p-3 text-right text-xs text-muted-foreground">
                   {formatDate(c.last_order_at)}
