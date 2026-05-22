@@ -204,9 +204,10 @@ export const syncShopify = createServerFn({ method: "POST" })
       if (customersBlocked) warnings.push("clienti bloccati (manca scope read_customers)");
       if (ordersBlocked) warnings.push("ordini bloccati (manca scope read_orders)");
       if (customersResult.capped || ordersResult.capped) warnings.push("sync parziale anti-timeout, rilancia per continuare");
-      const hint = warnings.length
-        ? ` — ${warnings.join("; ")}. Abilita 'Protected customer data' nell'app Shopify per importarli.`
+      const permissionHint = customersBlocked || ordersBlocked
+        ? ". Abilita 'Protected customer data' nell'app Shopify per importarli."
         : "";
+      const hint = warnings.length ? ` — ${warnings.join("; ")}${permissionHint}` : "";
       const msg = `${parts.join(" · ")}${hint}`;
 
       // Connesso: shop.json risponde. I dati limitati non rendono "rotta" l'integrazione.
