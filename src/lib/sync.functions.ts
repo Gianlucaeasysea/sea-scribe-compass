@@ -658,6 +658,25 @@ export const syncZendesk = createServerFn({ method: "POST" })
 
       const matched = rows.filter((r) => r.customer_id).length;
       const solved = rows.filter((r) => r.status === "solved" || r.status === "closed").length;
+
+      // 5. Tag matched customers with "zendesk" so the UI can flag support presence
+      const matchedCustomerIds = [...new Set(rows.map((r) => r.customer_id).filter(Boolean))] as string[];
+      if (matchedCustomerIds.length) {
+        const { data: existing } = await supabaseAdmin
+          .from("customers")
+          .select("id, tags")
+          .in("id", matchedCustomerIds);
+        const updates = (existing ?? [])
+          .filter((c: any) => !(Array.isArray(c.tags) ? c.tags : []).includes("zendesk"))
+          .map((c: any) => ({
+            id: c.id,
+            tags: [...(Array.isArray(c.tags) ? c.tags : []), "zendesk"],
+          }));
+        for (const u of updates) {
+          await (supabaseAdmin as any).from("customers").update({ tags: u.tags }).eq("id", u.id);
+        }
+      }
+
       const msg = `${allTickets.length} tickets · ${matched} matched · ${solved} solved`;
       await markStatus("zendesk", "Zendesk", true, allTickets.length, msg);
       return { ok: true, message: msg, total: allTickets.length, matched, solved };
