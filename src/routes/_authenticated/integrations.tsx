@@ -290,13 +290,13 @@ function Integrations() {
                 <Button variant="ghost" onClick={() => setOpenId(null)} disabled={busy}>
                   Cancel
                 </Button>
-                <Button onClick={handleSaveAndConnect} disabled={busy}>
+                <Button onClick={handleSaveCredentials} disabled={busy}>
                   {busy ? (
                     <>
-                      <Loader2 className="size-4 mr-2 animate-spin" /> Connecting…
+                      <Loader2 className="size-4 mr-2 animate-spin" /> Saving…
                     </>
                   ) : (
-                    "Save & Connect"
+                    "Save credentials"
                   )}
                 </Button>
               </DialogFooter>
