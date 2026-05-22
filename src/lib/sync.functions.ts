@@ -108,7 +108,7 @@ async function shopifyFetch(path: string, stored?: Record<string, string>): Prom
       const shopDomain = stored?.shop_domain || DEFAULT_SHOP_DOMAIN;
       res = await fetch(`https://${shopDomain}/admin/api/${SHOPIFY_API_VERSION}/${path}`, {
         headers: { "X-Shopify-Access-Token": token.value, "Content-Type": "application/json" },
-        signal: AbortSignal.timeout(8_000),
+        signal: AbortSignal.timeout(5_000),
       });
       if (res.status !== 429) break;
       const retryAfter = Number(res.headers.get("retry-after") ?? "2");
