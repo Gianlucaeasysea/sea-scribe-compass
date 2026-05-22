@@ -2,7 +2,8 @@ import { createFileRoute, useParams, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { getCustomerProfile } from "@/lib/queries.functions";
-import { ArrowLeft, Mail, MapPin, Anchor, MessageCircle, TrendingDown, ShoppingBag, LifeBuoy, AlertTriangle } from "lucide-react";
+import { ArrowLeft, Mail, MapPin, Anchor, MessageCircle, TrendingDown, ShoppingBag, LifeBuoy, AlertTriangle, Ship } from "lucide-react";
+import { useState } from "react";
 import { formatDate, formatEuro } from "@/lib/format";
 import { ClaudeCustomerInsights } from "@/components/ai/claude-customer-insights";
 
@@ -201,6 +202,8 @@ function CustomerProfile() {
               );
             })()}
           </div>
+
+          <VesselProfilePanel customer={c} />
 
           <div className="glow-card p-5 space-y-3">
             <div className="flex items-center justify-between">
