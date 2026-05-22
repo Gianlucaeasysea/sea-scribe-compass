@@ -45,9 +45,15 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "SeaMarketing Hub — Easysea" },
-      { name: "description", content: "Marine marketing intelligence: 360° customer profiles and next-best actions." },
+      { title: "SeaMarketing" },
+      { name: "description", content: "Tide Intelligence reconstructs customer profiles from integrated data to suggest precise marketing actions." },
       { name: "theme-color", content: "#0A0F1E" },
+      { property: "og:title", content: "SeaMarketing" },
+      { name: "twitter:title", content: "SeaMarketing" },
+      { property: "og:description", content: "Tide Intelligence reconstructs customer profiles from integrated data to suggest precise marketing actions." },
+      { name: "twitter:description", content: "Tide Intelligence reconstructs customer profiles from integrated data to suggest precise marketing actions." },
+      { name: "twitter:card", content: "summary" },
+      { property: "og:type", content: "website" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
