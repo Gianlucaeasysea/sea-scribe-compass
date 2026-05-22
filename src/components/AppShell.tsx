@@ -1,7 +1,7 @@
 import { Link, useLocation, useNavigate } from "@tanstack/react-router";
 import { useAuth } from "@/hooks/use-auth";
 import {
-  Anchor, Compass, Hexagon, Users, Layers, ListTodo, BarChart3, Plug, LogOut, Search,
+  Compass, Hexagon, Users, Layers, ListTodo, BarChart3, Plug, LogOut, Search,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
