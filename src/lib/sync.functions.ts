@@ -5,8 +5,8 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 const SHOP_DOMAIN = "easysea-design-lab.myshopify.com";
 const SHOPIFY_API_VERSION = "2025-07";
-const SHOPIFY_PAGE_LIMIT = 100;
-const SHOPIFY_MAX_PAGES = 2;
+const SHOPIFY_PAGE_LIMIT = 50;
+const SHOPIFY_MAX_PAGES = 1;
 
 async function markStatus(
   id: string,
@@ -56,7 +56,7 @@ async function shopifyFetch(path: string): Promise<ShopifyResult> {
     for (let attempt = 0; attempt < 2; attempt += 1) {
       res = await fetch(`https://${SHOP_DOMAIN}/admin/api/${SHOPIFY_API_VERSION}/${path}`, {
         headers: { "X-Shopify-Access-Token": token.value, "Content-Type": "application/json" },
-        signal: AbortSignal.timeout(12_000),
+        signal: AbortSignal.timeout(8_000),
       });
       if (res.status !== 429) break;
       const retryAfter = Number(res.headers.get("retry-after") ?? "1");
@@ -131,11 +131,13 @@ export const syncShopify = createServerFn({ method: "POST" })
       const productCount: number | null = productsProbe.json?.count ?? null;
 
       // 3. Clienti e ordini — se bloccati da scope, non far fallire tutto.
-      const customersResult = await fetchAllShopifyRecords<any>(`customers.json?limit=${SHOPIFY_PAGE_LIMIT}`, "customers");
+      const [customersResult, ordersResult] = await Promise.all([
+        fetchAllShopifyRecords<any>(`customers.json?limit=${SHOPIFY_PAGE_LIMIT}`, "customers"),
+        fetchAllShopifyRecords<any>(`orders.json?status=any&limit=${SHOPIFY_PAGE_LIMIT}`, "orders"),
+      ]);
+      
       let customers = customersResult.records;
       const customersBlocked = customersResult.blockedStatus !== null;
-
-      const ordersResult = await fetchAllShopifyRecords<any>(`orders.json?status=any&limit=${SHOPIFY_PAGE_LIMIT}`, "orders");
       const orders = ordersResult.records;
       const ordersBlocked = ordersResult.blockedStatus !== null;
 
