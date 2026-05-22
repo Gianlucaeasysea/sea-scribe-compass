@@ -128,42 +128,60 @@ Deno.serve(async (req) => {
     let updatedCount = 0;
     let unmatchedCount = 0;
 
+    const matchedRows: any[] = [];
+    const newRows: any[] = [];
     for (const row of allRows) {
-      const customerId = customerByEmail.get(row.email);
       const isoDate = row.date ? new Date(row.date).toISOString() : null;
       const safeDate = isoDate && !isNaN(new Date(isoDate).getTime()) ? isoDate : null;
-
+      const customerId = customerByEmail.get(row.email);
       if (customerId) {
-        await supabase
-          .from('customers')
-          .update({
-            boat_type: row.boatType,
-            boat_model: row.boatModel,
-            community_join_date: safeDate,
-            community_lead_status: row.leadStatus,
-          })
-          .eq('id', customerId);
-        updatedCount++;
+        matchedRows.push({ id: customerId, row, safeDate });
       } else {
-        const { data: inserted } = await supabase
-          .from('customers')
-          .upsert(
-            {
-              email: row.email,
-              name: row.email.split('@')[0],
+        newRows.push({ row, safeDate });
+      }
+    }
+
+    // Parallel updates for matched customers (chunks of 50)
+    const CHUNK = 50;
+    for (let i = 0; i < matchedRows.length; i += CHUNK) {
+      const slice = matchedRows.slice(i, i + CHUNK);
+      await Promise.all(
+        slice.map(({ id, row, safeDate }) =>
+          supabase
+            .from('customers')
+            .update({
               boat_type: row.boatType,
               boat_model: row.boatModel,
               community_join_date: safeDate,
               community_lead_status: row.leadStatus,
-              tags: ['community-only'],
-              lifetime_value: 0,
-              total_orders: 0,
-            },
-            { onConflict: 'email' }
-          )
-          .select('id')
-          .single();
-        if (inserted) unmatchedCount++;
+            })
+            .eq('id', id)
+        )
+      );
+    }
+    let updatedCount = matchedRows.length;
+
+    // Bulk insert new community-only customers
+    let unmatchedCount = 0;
+    if (newRows.length > 0) {
+      const payload = newRows.map(({ row, safeDate }) => ({
+        email: row.email,
+        name: row.email.split('@')[0],
+        boat_type: row.boatType,
+        boat_model: row.boatModel,
+        community_join_date: safeDate,
+        community_lead_status: row.leadStatus,
+        tags: ['community-only'],
+        lifetime_value: 0,
+        total_orders: 0,
+      }));
+      for (let i = 0; i < payload.length; i += 500) {
+        const slice = payload.slice(i, i + 500);
+        const { data } = await supabase
+          .from('customers')
+          .upsert(slice, { onConflict: 'email' })
+          .select('id');
+        unmatchedCount += data?.length ?? slice.length;
       }
     }
 
