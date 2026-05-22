@@ -38,6 +38,7 @@ function Fleet() {
   }, [data]);
 
   const inCommunity = (c: any) => !!c.circle_id || (c.tags ?? []).includes("circle-member");
+  const isShopify = (c: any) => !!c.shopify_id;
 
   const rows = useMemo(() => {
     const list = data ?? [];
@@ -47,6 +48,8 @@ function Fleet() {
       if (tagFilter && !(c.tags ?? []).includes(tagFilter)) return false;
       if (communityFilter === "in" && !inCommunity(c)) return false;
       if (communityFilter === "out" && inCommunity(c)) return false;
+      if (communityFilter === "both" && !(inCommunity(c) && isShopify(c))) return false;
+      if (communityFilter === "circle_only" && !(inCommunity(c) && !isShopify(c))) return false;
       if (!Q) return true;
       return (
         c.name?.toLowerCase().includes(Q) ||
