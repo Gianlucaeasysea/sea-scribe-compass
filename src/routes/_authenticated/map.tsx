@@ -351,13 +351,13 @@ function CustomerList({
   return (
     <div className="glow-card p-0 overflow-hidden">
       <div className="flex items-center justify-between px-5 py-3 border-b border-border">
-        <h3 className="font-semibold">Fleet leaderboard</h3>
-        <span className="text-xs font-mono text-muted-foreground">{sorted.length.toLocaleString()} sailors · sorted by LTV</span>
+        <h3 className="font-semibold">Classifica clienti</h3>
+        <span className="text-xs font-mono text-muted-foreground">{sorted.length.toLocaleString()} clienti · ordinati per valore</span>
       </div>
       <div ref={ref} className="overflow-auto" style={{ height: 560 }}>
-        {loading && <p className="text-sm text-muted-foreground text-center py-20">Loading fleet…</p>}
+        {loading && <p className="text-sm text-muted-foreground text-center py-20">Caricamento…</p>}
         {!loading && sorted.length === 0 && (
-          <p className="text-sm text-muted-foreground text-center py-20">No sailors match these filters.</p>
+          <p className="text-sm text-muted-foreground text-center py-20">Nessun cliente corrisponde alla ricerca.</p>
         )}
         <div style={{ height: sorted.length * ROW_H, position: "relative" }}>
           <div style={{ position: "absolute", top: start * ROW_H, left: 0, right: 0 }}>
@@ -380,7 +380,7 @@ function CustomerList({
                   </div>
                   <div className="flex items-center gap-2 min-w-0">
                     <span className="size-2 rounded-full flex-shrink-0" style={{ background: tierColor }} />
-                    <span className="text-xs truncate">{c.rfm?.tier ?? "Unscored"}</span>
+                    <span className="text-xs truncate">{tierIT(c.rfm?.tier ?? "Unscored")}</span>
                   </div>
                   <span className="font-mono text-sm text-emerald-400 tabular-nums">{formatEuro(c.lifetime_value)}</span>
                   <span className="font-mono text-xs text-muted-foreground tabular-nums">{c.total_orders} ord</span>
