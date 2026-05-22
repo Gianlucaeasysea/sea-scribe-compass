@@ -4,7 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { getCustomerProfile } from "@/lib/queries.functions";
 import { ArrowLeft, Mail, MapPin, Anchor, MessageCircle, TrendingDown, ShoppingBag, LifeBuoy, AlertTriangle, Ship } from "lucide-react";
 import { useState } from "react";
-import { formatDate, formatEuro } from "@/lib/format";
+import { formatDate, formatEuro, nowMs } from "@/lib/format";
 import { tierIT, tierBadgeClass, boatIcon, countryFlag } from "@/lib/i18n";
 import { ClaudeCustomerInsights } from "@/components/ai/claude-customer-insights";
 
