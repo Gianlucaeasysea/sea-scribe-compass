@@ -164,34 +164,59 @@ function Integrations() {
           const id = i.id as IntegrationId;
           const meta = META[id] ?? { color: "#00D4FF", desc: "" };
           const isLoading = mutation.isPending && mutation.variables === id;
+          const msg: string = i.status_message ?? "";
+          const lower = msg.toLowerCase();
+          const isWarn =
+            lower.includes("not configured") || lower.includes("not connected");
+          const isError =
+            !isWarn &&
+            (lower.includes("non valido") ||
+              lower.includes("invalid") ||
+              lower.includes("error") ||
+              lower.includes("failed") ||
+              lower.includes("exceeded"));
+          const statusTone = isError
+            ? "text-destructive"
+            : isWarn
+              ? "text-amber-400"
+              : i.connected
+                ? "text-emerald-400"
+                : "text-muted-foreground";
           return (
             <div key={i.id} className="glow-card p-5 space-y-3">
               <div className="flex items-start justify-between">
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 min-w-0">
                   <div
-                    className="size-10 rounded-lg grid place-items-center font-bold text-white"
+                    className="size-10 rounded-lg grid place-items-center font-bold text-white shrink-0"
                     style={{ background: meta.color }}
                   >
                     {i.name[0]}
                   </div>
-                  <div>
+                  <div className="min-w-0">
                     <h3 className="font-semibold">{i.name}</h3>
                     <p className="text-xs text-muted-foreground">{meta.desc}</p>
+                    {msg && (
+                      <p className={`text-xs mt-1 break-words ${statusTone}`}>
+                        {msg}
+                      </p>
+                    )}
                   </div>
                 </div>
                 {i.connected ? (
-                  <CheckCircle2 className="size-5 text-emerald-400" />
+                  <CheckCircle2 className="size-5 text-emerald-400 shrink-0" />
                 ) : (
-                  <Circle className="size-5 text-muted-foreground" />
+                  <Circle className="size-5 text-muted-foreground shrink-0" />
                 )}
               </div>
               <div className="flex items-center justify-between text-xs text-muted-foreground">
                 <span className="truncate pr-2">
                   {i.connected
-                    ? `${formatNumber(i.records_synced ?? 0)} records · ${i.status_message ?? "synced"}`
-                    : i.status_message || "Not connected"}
+                    ? `${formatNumber(i.records_synced ?? 0)} records · synced`
+                    : "Awaiting first sync"}
                 </span>
-                {i.last_sync_at && <span className="font-mono shrink-0">{formatDate(i.last_sync_at)}</span>}
+                {i.last_sync_at && (
+                  <span className="font-mono shrink-0">{formatDate(i.last_sync_at)}</span>
+                )}
               </div>
               <div className="flex gap-2">
                 <Button
@@ -216,9 +241,9 @@ function Integrations() {
                     "Connect & sync"
                   )}
                 </Button>
-                {i.connected && CREDENTIAL_FORMS[id] && (
+                {CREDENTIAL_FORMS[id] && (
                   <Button variant="ghost" size="sm" onClick={() => openConnect(id)}>
-                    Edit
+                    Edit credentials
                   </Button>
                 )}
               </div>
