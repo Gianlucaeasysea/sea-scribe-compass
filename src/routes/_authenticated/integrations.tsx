@@ -123,7 +123,7 @@ function Integrations() {
     setOpenId(id);
   };
 
-  const handleSaveAndConnect = async () => {
+  const handleSaveCredentials = async () => {
     if (!openId) return;
     setBusy(true);
     setError(null);
@@ -134,9 +134,7 @@ function Integrations() {
         throw new Error(`Missing: ${missing.map((m) => m.label).join(", ")}`);
       }
       await saveCreds({ data: { id: openId, credentials: values } });
-      const result = await syncFns[openId]({});
-      if (!result.ok) throw new Error(result.message);
-      toast.success(`${openId}: ${result.message}`);
+      toast.success("Credentials saved! Click Sync now to import your data.");
       qc.invalidateQueries({ queryKey: ["integrations"] });
       qc.invalidateQueries({ queryKey: ["dashboard"] });
       setOpenId(null);
