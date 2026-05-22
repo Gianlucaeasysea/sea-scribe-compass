@@ -86,6 +86,13 @@ function sleep(ms: number) {
 }
 
 type ShopifyResult = { json: any; link: string | null; status: number };
+type ShopifyPageSyncInput = {
+  nextCustomersPath?: string | null;
+  nextOrdersPath?: string | null;
+  productCount?: number | null;
+  customersSynced?: number;
+  ordersSynced?: number;
+};
 
 function getShopifyTokens(stored?: Record<string, string>) {
   const tokens = [
@@ -102,6 +109,7 @@ async function shopifyFetch(path: string, stored?: Record<string, string>): Prom
 
 
   let authFailureStatus: number | null = null;
+  let lastFetchError: unknown = null;
   for (const token of tokens) {
     let res: Response | null = null;
     for (let attempt = 0; attempt < 5; attempt += 1) {
@@ -109,11 +117,12 @@ async function shopifyFetch(path: string, stored?: Record<string, string>): Prom
       try {
         res = await fetch(`https://${shopDomain}/admin/api/${SHOPIFY_API_VERSION}/${path}`, {
           headers: { "X-Shopify-Access-Token": token.value, "Content-Type": "application/json" },
-          signal: AbortSignal.timeout(5_000),
+          signal: AbortSignal.timeout(15_000),
         });
       } catch {
-        // Timeout/network abort — soft-fail so caller stops pagination without killing the whole sync
-        return { json: null, link: null, status: 408 };
+        lastFetchError = new Error(`Shopify request timed out while reading ${path}`);
+        await sleep(500 + attempt * 500);
+        continue;
       }
       if (res.status !== 429) break;
       const retryAfter = Number(res.headers.get("retry-after") ?? "2");
@@ -134,6 +143,7 @@ async function shopifyFetch(path: string, stored?: Record<string, string>): Prom
     return { json: await res.json(), link: res.headers.get("link"), status: res.status };
   }
 
+  if (lastFetchError) throw lastFetchError;
   return { json: null, link: null, status: authFailureStatus ?? 401 };
 }
 
