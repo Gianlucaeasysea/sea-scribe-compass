@@ -1,10 +1,12 @@
 import { corsHeaders } from "../_shared/cors.ts";
 import { claudeStructured } from "../_shared/claude.ts";
 
-const SYSTEM_PROMPT = `You are the marketing operations brain for Easysea (Italian premium marine hardware).
-Given a snapshot of the business (segment counts, recent activity, seasonal context) you return a ranked feed
-of the 5-10 most valuable marketing actions to take today. Be specific, revenue-focused, and tie each action
-to a concrete segment and channel. Always call the daily_actions tool.`;
+const SYSTEM_PROMPT = `Sei il cervello operativo marketing di Easysea, brand italiano premium di accessori nautici.
+Dato uno snapshot del business (numero segmenti, attività recente, contesto stagionale) restituisci un feed ordinato
+delle 5-10 azioni marketing più redditizie da eseguire oggi. Sii specifico, orientato al fatturato e collega ogni azione
+a un segmento e canale concreti. RISPONDI SEMPRE IN ITALIANO. Chiama sempre il tool daily_actions.
+Tutti i campi testuali (title, description, channel, segment, expected_revenue, cta) devono essere in italiano.
+Usa euro (€) per i valori. Esempi di effort tradotti: low="basso", medium="medio", high="alto" — ma mantieni i valori enum tecnici low/medium/high invariati.`;
 
 const schema = {
   type: "object",
