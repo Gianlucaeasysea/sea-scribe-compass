@@ -148,7 +148,7 @@ export const getMapCustomers = createServerFn({ method: "GET" })
       productsByCustomer.set(o.customer_id, set);
     });
 
-    return (customers ?? []).map((c) => ({
+    return customers.map((c) => ({
       ...c,
       rfm: rfmMap.get(c.id) ?? null,
       products: [...(productsByCustomer.get(c.id) ?? new Set<string>())],
