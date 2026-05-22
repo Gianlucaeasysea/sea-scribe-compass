@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { getCustomerProfile } from "@/lib/queries.functions";
 import { ArrowLeft, Mail, MapPin, Anchor, MessageCircle, TrendingDown, ShoppingBag } from "lucide-react";
+import { formatDate, formatEuro } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/customer/$id")({
   component: CustomerProfile,
