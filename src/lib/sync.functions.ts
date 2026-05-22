@@ -461,6 +461,29 @@ export const syncCircle = createServerFn({ method: "POST" })
         : { data: [] as { id: string; email: string }[] };
       const byEmail = new Map((existing ?? []).map((c) => [c.email, c.id]));
 
+      // Members not matched to any Shopify customer → create minimal customer record
+      const unmatchedMembers = allMembers.filter(
+        (m) => m.email && !byEmail.has(m.email)
+      );
+      if (unmatchedMembers.length > 0) {
+        const newCustomers = unmatchedMembers.map((m) => ({
+          email: m.email,
+          name: m.name || m.email,
+          country: null,
+          city: null,
+          lifetime_value: 0,
+          total_orders: 0,
+          tags: ["circle-only"],
+        }));
+        const { data: inserted } = await supabaseAdmin
+          .from("customers")
+          .upsert(newCustomers, { onConflict: "email" })
+          .select("id, email");
+        for (const c of inserted ?? []) {
+          byEmail.set(c.email, c.id);
+        }
+      }
+
       const rows = allMembers
         .filter((m: any) => byEmail.has(m.email))
         .map((m: any) => ({
