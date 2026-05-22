@@ -6,7 +6,7 @@ import { useMemo, useRef, useState, useEffect } from "react";
 import { TIER_COLOR } from "@/lib/intelligence";
 import { Input } from "@/components/ui/input";
 import { Search, Tag as TagIcon, ArrowRight, MessageCircle } from "lucide-react";
-import { formatEuro } from "@/lib/format";
+import { formatEuro, formatNumber, nowMs } from "@/lib/format";
 import { tierIT } from "@/lib/i18n";
 
 export const Route = createFileRoute("/_authenticated/map")({
@@ -63,7 +63,7 @@ function FleetMap() {
     <div className="p-8 space-y-6 max-w-[1400px] mx-auto">
       <div>
         <p className="font-mono text-xs text-primary tracking-widest">MAPPA CLIENTI</p>
-        <h1 className="text-3xl font-semibold mt-1">{total.toLocaleString()} clienti in vista</h1>
+        <h1 className="text-3xl font-semibold mt-1">{formatNumber(total)} clienti in vista</h1>
         <p className="text-muted-foreground text-sm mt-1">
           Distribuzione geografica dei diportisti — segmenti, posizionamento RFM e concentrazione di valore in un'unica schermata.
         </p>
@@ -82,15 +82,15 @@ function FleetMap() {
             />
           </div>
           <span className="text-xs font-mono text-muted-foreground">
-            {filtered.length.toLocaleString()} / {total.toLocaleString()}
+            {formatNumber(filtered.length)} / {formatNumber(total)}
           </span>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Chip label={`Tutti · ${total.toLocaleString()}`} active={tier === null} onClick={() => setTier(null)} />
+          <Chip label={`Tutti · ${formatNumber(total)}`} active={tier === null} onClick={() => setTier(null)} />
           {TIERS.map((t) => (
             <Chip
               key={t}
-              label={`${tierIT(t)} · ${(tierStats[t]?.count ?? 0).toLocaleString()}`}
+              label={`${tierIT(t)} · ${formatNumber(tierStats[t]?.count ?? 0)}`}
               active={tier === t}
               color={TIER_COLOR[t]}
               onClick={() => setTier(tier === t ? null : t)}
@@ -149,7 +149,7 @@ function FleetMap() {
                 <span className="size-2.5 rounded-sm flex-shrink-0" style={{ background: color }} />
                 <div className="flex-1 min-w-0">
                   <p className="truncate font-medium">{tierIT(t)}</p>
-                  <p className="font-mono text-[10px] text-muted-foreground">{s.count.toLocaleString()} · {formatEuro(s.revenue)}</p>
+                  <p className="font-mono text-[10px] text-muted-foreground">{formatNumber(s.count)} · {formatEuro(s.revenue)}</p>
                 </div>
               </div>
             );
@@ -214,7 +214,7 @@ function RfmScatter({
   const PAD = { l: 56, r: 16, t: 12, b: 36 };
 
   const points = useMemo(() => {
-    const now = Date.now();
+    const now = nowMs();
     return customers
       .map((c) => {
         const last = c.last_order_at ? new Date(c.last_order_at).getTime() : null;
@@ -247,7 +247,7 @@ function RfmScatter({
             X = giorni dall'ultimo ordine · Y = valore lifetime (log) · colore = segmento · dimensione = valore
           </p>
         </div>
-        <span className="text-xs font-mono text-muted-foreground">{points.length.toLocaleString()} clienti</span>
+        <span className="text-xs font-mono text-muted-foreground">{formatNumber(points.length)} clienti</span>
       </div>
       <div className="w-full overflow-x-auto">
         <svg
@@ -352,7 +352,7 @@ function CustomerList({
     <div className="glow-card p-0 overflow-hidden">
       <div className="flex items-center justify-between px-5 py-3 border-b border-border">
         <h3 className="font-semibold">Classifica clienti</h3>
-        <span className="text-xs font-mono text-muted-foreground">{sorted.length.toLocaleString()} clienti · ordinati per valore</span>
+        <span className="text-xs font-mono text-muted-foreground">{formatNumber(sorted.length)} clienti · ordinati per valore</span>
       </div>
       <div ref={ref} className="overflow-auto" style={{ height: 560 }}>
         {loading && <p className="text-sm text-muted-foreground text-center py-20">Caricamento…</p>}

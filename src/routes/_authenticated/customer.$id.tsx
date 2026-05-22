@@ -4,7 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { getCustomerProfile } from "@/lib/queries.functions";
 import { ArrowLeft, Mail, MapPin, Anchor, MessageCircle, TrendingDown, ShoppingBag, LifeBuoy, AlertTriangle, Ship } from "lucide-react";
 import { useState } from "react";
-import { formatDate, formatEuro } from "@/lib/format";
+import { formatDate, formatEuro, nowMs } from "@/lib/format";
 import { tierIT, tierBadgeClass, boatIcon, countryFlag } from "@/lib/i18n";
 import { ClaudeCustomerInsights } from "@/components/ai/claude-customer-insights";
 
@@ -45,7 +45,7 @@ function CustomerProfile() {
 
   const lastOrderAt = c.last_order_at ? new Date(c.last_order_at) : null;
   const daysSince = lastOrderAt
-    ? Math.max(0, Math.floor((Date.now() - lastOrderAt.getTime()) / 86_400_000))
+    ? Math.max(0, Math.floor((nowMs() - lastOrderAt.getTime()) / 86_400_000))
     : 999;
   const aiCustomer = {
     id: c.id,
@@ -309,7 +309,7 @@ function relativeDays(iso?: string | null) {
   if (!iso) return "—";
   const d = new Date(iso).getTime();
   if (Number.isNaN(d)) return "—";
-  const days = Math.floor((Date.now() - d) / 86_400_000);
+  const days = Math.floor((nowMs() - d) / 86_400_000);
   if (days <= 0) return "today";
   if (days === 1) return "yesterday";
   if (days < 30) return `${days} days ago`;
