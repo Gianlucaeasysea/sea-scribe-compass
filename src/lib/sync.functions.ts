@@ -197,9 +197,7 @@ export const syncShopify = createServerFn({ method: "POST" })
       const productCount: number | null = productsProbe.json?.count ?? null;
 
       // 3. Clienti e ordini — se bloccati da scope, non far fallire tutto.
-      // Sequenziale + delay per rispettare il limite 2 req/sec di Shopify
       const customersResult = await fetchAllShopifyRecords<any>(`customers.json?limit=${SHOPIFY_PAGE_LIMIT}`, "customers", stored);
-      await sleep(600);
       const ordersResult = await fetchAllShopifyRecords<any>(`orders.json?status=any&limit=${SHOPIFY_PAGE_LIMIT}`, "orders", stored);
 
       
