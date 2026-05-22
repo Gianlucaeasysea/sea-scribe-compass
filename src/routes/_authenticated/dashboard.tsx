@@ -35,6 +35,7 @@ function Dashboard() {
   const klaviyoFn = useServerFn(syncKlaviyo);
   const facebookFn = useServerFn(syncFacebook);
   const circleFn = useServerFn(syncCircle);
+  const refreshFn = useServerFn(refreshFleet);
   const qc = useQueryClient();
   const { data, isLoading, isFetching } = useQuery({ queryKey: ["dashboard"], queryFn: () => fetch({}) });
   const seedMut = useMutation({
