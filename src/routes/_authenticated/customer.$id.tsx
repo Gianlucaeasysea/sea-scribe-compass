@@ -4,6 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { getCustomerProfile } from "@/lib/queries.functions";
 import { ArrowLeft, Mail, MapPin, Anchor, MessageCircle, TrendingDown, ShoppingBag } from "lucide-react";
 import { formatDate, formatEuro } from "@/lib/format";
+import { ClaudeCustomerInsights } from "@/components/ai/claude-customer-insights";
 
 export const Route = createFileRoute("/_authenticated/customer/$id")({
   component: CustomerProfile,
