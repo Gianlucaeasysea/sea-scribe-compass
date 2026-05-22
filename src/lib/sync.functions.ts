@@ -279,14 +279,3 @@ export const syncCircle = createServerFn({ method: "POST" })
     }
   });
 
-// ---------- Dispatcher ----------
-export const syncIntegration = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((i) => z.object({ id: z.enum(["shopify", "klaviyo", "facebook", "circle"]) }).parse(i))
-  .handler(async ({ data, context }) => {
-    // Re-dispatch by delegating to the right handler logic
-    const headers = { authorization: `Bearer ${(context as any).accessToken ?? ""}` };
-    // Simpler: call the helper functions directly by inlining logic isn't possible;
-    // just throw so the client calls the specific fn instead.
-    throw new Error(`Use specific sync function for ${data.id}`);
-  });
