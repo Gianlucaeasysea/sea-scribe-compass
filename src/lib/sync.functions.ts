@@ -5,8 +5,8 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 const DEFAULT_SHOP_DOMAIN = "easysea-design-lab.myshopify.com";
 const SHOPIFY_API_VERSION = "2025-07";
-const SHOPIFY_PAGE_LIMIT = 50;
-const SHOPIFY_MAX_PAGES = 1;
+const SHOPIFY_PAGE_LIMIT = 250;
+const SHOPIFY_MAX_PAGES = 20;
 
 type IntegrationId = "shopify" | "klaviyo" | "facebook" | "circle";
 
@@ -197,9 +197,7 @@ export const syncShopify = createServerFn({ method: "POST" })
       const productCount: number | null = productsProbe.json?.count ?? null;
 
       // 3. Clienti e ordini — se bloccati da scope, non far fallire tutto.
-      // Sequenziale + delay per rispettare il limite 2 req/sec di Shopify
       const customersResult = await fetchAllShopifyRecords<any>(`customers.json?limit=${SHOPIFY_PAGE_LIMIT}`, "customers", stored);
-      await sleep(600);
       const ordersResult = await fetchAllShopifyRecords<any>(`orders.json?status=any&limit=${SHOPIFY_PAGE_LIMIT}`, "orders", stored);
 
       
