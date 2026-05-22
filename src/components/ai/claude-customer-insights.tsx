@@ -72,7 +72,7 @@ export function ClaudeCustomerInsights({ customer }: { customer: CustomerInput }
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <Brain className={`size-4 text-primary ${isFetching ? "animate-pulse" : ""}`} />
-          <h3 className="font-semibold">Claude AI insights</h3>
+          <h3 className="font-semibold">Insight AI Claude</h3>
           <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-primary/15 text-primary border border-primary/30">
             powered by Claude
           </span>
@@ -80,7 +80,7 @@ export function ClaudeCustomerInsights({ customer }: { customer: CustomerInput }
         {hasResult && (
           <Button size="sm" variant="ghost" onClick={run} disabled={isFetching}>
             <RefreshCw className={`size-3 mr-1 ${isFetching ? "animate-spin" : ""}`} />
-            Refresh
+            Aggiorna
           </Button>
         )}
       </div>
@@ -89,10 +89,10 @@ export function ClaudeCustomerInsights({ customer }: { customer: CustomerInput }
         <div className="py-6 text-center space-y-3">
           <Sparkles className="size-6 text-primary mx-auto" />
           <p className="text-xs text-muted-foreground">
-            Generate a tailored AI analysis for this sailor on demand.
+            Genera un'analisi AI su misura per questo velista, on demand.
           </p>
           <Button size="sm" onClick={run} disabled={isFetching}>
-            <Brain className="size-3.5 mr-1.5" /> Run Claude analysis
+            <Brain className="size-3.5 mr-1.5" /> Esegui analisi Claude
           </Button>
         </div>
       )}
@@ -100,7 +100,7 @@ export function ClaudeCustomerInsights({ customer }: { customer: CustomerInput }
       {isFetching && (
         <div className="py-8 text-center space-y-2">
           <Sparkles className="size-6 text-primary mx-auto animate-pulse" />
-          <p className="text-xs text-muted-foreground">Analyzing customer data…</p>
+          <p className="text-xs text-muted-foreground">Analisi dati cliente in corso…</p>
         </div>
       )}
 
