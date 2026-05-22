@@ -174,7 +174,7 @@ export const syncShopify = createServerFn({ method: "POST" })
       const stored = await loadCredentials("shopify");
       const hasToken = Boolean(stored.access_token || process.env.SHOPIFY_ACCESS_TOKEN || process.env.SHOPIFY_CUSTOM_ADMIN_TOKEN);
       if (!hasToken) {
-        const msg = "Shopify API token not configured. Click Connect to add your credentials.";
+        const msg = "Token Shopify non configurato. Clicca 'Edit credentials' per aggiungerlo.";
         await markStatus("shopify", "Shopify", false, 0, msg);
         return { ok: false, message: msg };
       }
@@ -293,7 +293,7 @@ export const syncKlaviyo = createServerFn({ method: "POST" })
       const stored = await loadCredentials("klaviyo");
       const key = stored.api_key || process.env.KLAVIYO_API_KEY;
       if (!key) {
-        const msg = "Klaviyo API key not configured. Click Connect to add your credentials.";
+        const msg = "API Key Klaviyo non configurata. Clicca 'Edit credentials' per aggiungerla.";
         await markStatus("klaviyo", "Klaviyo", false, 0, msg);
         return { ok: false, message: msg };
       }
@@ -378,7 +378,7 @@ export const syncFacebook = createServerFn({ method: "POST" })
       const token = stored.access_token || process.env.FACEBOOK_ADS_ACCESS_TOKEN;
       const acct = stored.ad_account_id || process.env.FACEBOOK_AD_ACCOUNT_ID;
       if (!token || !acct) {
-        const msg = "Facebook Ads credentials not configured. Click Connect to add access_token and ad_account_id.";
+        const msg = "Credenziali Facebook Ads non configurate. Clicca 'Edit credentials' per aggiungerle.";
         await markStatus("facebook", "Facebook Ads", false, 0, msg);
         return { ok: false, message: msg };
       }
@@ -434,7 +434,7 @@ export const syncCircle = createServerFn({ method: "POST" })
       const token = stored.api_token || process.env.CIRCLE_API_TOKEN;
       const community = stored.community_id || process.env.CIRCLE_COMMUNITY_ID;
       if (!token || !community) {
-        const msg = "Circle credentials not configured. Click Connect to add api_token and community_id.";
+        const msg = "Credenziali Circle non configurate. Clicca 'Edit credentials' per aggiungerle.";
         await markStatus("circle", "Circle", false, 0, msg);
         return { ok: false, message: msg };
       }
