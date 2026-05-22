@@ -1,7 +1,16 @@
 // All read server functions for the dashboard, profile, map, etc.
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { z } from "zod";
+
+export const refreshFleet = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async () => {
+    const { data, error } = await (supabaseAdmin as any).rpc("refresh_fleet");
+    if (error) throw new Error(error.message);
+    return data as { customers: number; rfm: number; recommendations: number; actions: number };
+  });
 
 export const getDashboardData = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
