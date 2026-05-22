@@ -1,7 +1,7 @@
 import { Link, useLocation, useNavigate } from "@tanstack/react-router";
 import { useAuth } from "@/hooks/use-auth";
 import {
-  Compass, Hexagon, Users, Layers, ListTodo, BarChart3, Plug, LogOut, Search,
+  LayoutDashboard, Users, Globe, Anchor, Zap, BarChart2, Plug, LogOut, Search,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
@@ -14,13 +14,13 @@ import { useServerFn } from "@tanstack/react-start";
 import { searchCustomers } from "@/lib/queries.functions";
 
 const NAV = [
-  { to: "/dashboard", label: "Bridge", icon: Compass, key: "D" },
-  { to: "/map", label: "Honeycomb", icon: Hexagon, key: "M" },
-  { to: "/fleet", label: "Fleet", icon: Users, key: "F" },
-  { to: "/harbor", label: "Harbor", icon: Layers, key: "H" },
-  { to: "/queue", label: "Action Queue", icon: ListTodo, key: "Q" },
-  { to: "/analytics", label: "Charts", icon: BarChart3, key: "A" },
-  { to: "/integrations", label: "Integrations", icon: Plug, key: "I" },
+  { to: "/dashboard",    label: "Panoramica",  icon: LayoutDashboard, key: "D" },
+  { to: "/fleet",        label: "Clienti",     icon: Users,           key: "F" },
+  { to: "/map",          label: "Mappa",       icon: Globe,           key: "M" },
+  { to: "/harbor",       label: "Segmenti",    icon: Anchor,          key: "H" },
+  { to: "/queue",        label: "Azioni",      icon: Zap,             key: "Q" },
+  { to: "/analytics",    label: "Analisi",     icon: BarChart2,       key: "A" },
+  { to: "/integrations", label: "Connettori",  icon: Plug,            key: "I" },
 ];
 
 export function AppShell({ children }: { children: ReactNode }) {
