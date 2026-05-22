@@ -136,6 +136,8 @@ function CustomerProfile() {
                   ))}
                 </div>
               </>
+            ) : c.circle_id || (c.tags ?? []).includes("circle-member") ? (
+              <p className="text-xs text-muted-foreground">Circle member — no engagement tracked yet.</p>
             ) : (
               <p className="text-xs text-muted-foreground">Not in Circle community.</p>
             )}
