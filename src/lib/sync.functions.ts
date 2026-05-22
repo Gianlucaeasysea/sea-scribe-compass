@@ -3,6 +3,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { createClient } from "@supabase/supabase-js";
+
 const DEFAULT_SHOP_DOMAIN = "easysea-design-lab.myshopify.com";
 const SHOPIFY_API_VERSION = "2025-07";
 const SHOPIFY_PAGE_LIMIT = 250;
@@ -686,5 +688,19 @@ export const syncZendesk = createServerFn({ method: "POST" })
       throw new Error(msg);
     }
   });
+
+// ---------- Google Sheet Boats ----------
+export const syncGsheetBoats = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async () => {
+    const supabase = createClient(
+      process.env.SUPABASE_URL!,
+      process.env.SUPABASE_PUBLISHABLE_KEY!,
+    );
+    const { data, error } = await supabase.functions.invoke("gsheet-boats-sync");
+    if (error) throw new Error(error.message);
+    return data;
+  });
+
 
 
