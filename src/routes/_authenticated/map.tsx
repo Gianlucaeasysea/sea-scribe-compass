@@ -148,7 +148,7 @@ function FleetMap() {
               <div key={t} className="flex items-center gap-2 rounded-md border border-border bg-surface-2/40 px-2 py-1.5">
                 <span className="size-2.5 rounded-sm flex-shrink-0" style={{ background: color }} />
                 <div className="flex-1 min-w-0">
-                  <p className="truncate font-medium">{t}</p>
+                  <p className="truncate font-medium">{tierIT(t)}</p>
                   <p className="font-mono text-[10px] text-muted-foreground">{s.count.toLocaleString()} · {formatEuro(s.revenue)}</p>
                 </div>
               </div>
