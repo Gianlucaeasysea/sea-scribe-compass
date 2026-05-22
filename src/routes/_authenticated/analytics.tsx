@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { getAnalytics } from "@/lib/queries.functions";
 import { useMemo } from "react";
+import type { ReactNode } from "react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from "recharts";
 
 export const Route = createFileRoute("/_authenticated/analytics")({
@@ -110,7 +111,7 @@ function Analytics() {
   );
 }
 
-function Card({ title, children }: { title: string; children: React.ReactNode }) {
+function Card({ title, children }: { title: string; children: ReactNode }) {
   return (
     <div className="glow-card p-5 space-y-3">
       <h3 className="font-semibold">{title}</h3>

@@ -5,6 +5,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
+import type { ReactNode } from "react";
 import {
   CommandDialog, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem,
 } from "@/components/ui/command";
@@ -22,7 +23,7 @@ const NAV = [
   { to: "/integrations", label: "Integrations", icon: Plug, key: "I" },
 ];
 
-export function AppShell({ children }: { children: React.ReactNode }) {
+export function AppShell({ children }: { children: ReactNode }) {
   const loc = useLocation();
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
