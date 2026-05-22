@@ -312,3 +312,74 @@ function Stat({ label, value, icon: Icon, tone }: { label: string; value: any; i
     </div>
   );
 }
+
+function VesselProfilePanel({ customer }: { customer: any }) {
+  const [expanded, setExpanded] = useState(false);
+  const boatType: string | null = customer.boat_type ?? null;
+  const boatModel: string | null = customer.boat_model ?? null;
+  const joinDate: string | null = customer.community_join_date ?? null;
+  const leadStatus: string | null = customer.community_lead_status ?? null;
+
+  if (!boatType && !boatModel) {
+    return (
+      <div className="glow-card p-5 space-y-2">
+        <h3 className="font-semibold flex items-center gap-2">
+          <Ship className="size-4 text-primary" /> Vessel profile
+        </h3>
+        <p className="text-xs text-muted-foreground italic">
+          No vessel data — not in community sheet
+        </p>
+      </div>
+    );
+  }
+
+  const isSail = (boatType ?? "").toLowerCase().includes("sail") || (boatType ?? "").toLowerCase().includes("vela");
+  const typeEmoji = isSail ? "⛵" : "🚤";
+  const typeLabel = boatType ?? (isSail ? "Sailboat" : "Motorboat");
+  const showLong = boatModel && boatModel.length > 100;
+  const displayedModel = showLong && !expanded ? boatModel!.slice(0, 100) + "…" : boatModel;
+
+  return (
+    <div className="glow-card p-5 space-y-3">
+      <h3 className="font-semibold flex items-center gap-2">
+        <Ship className="size-4 text-primary" /> Vessel profile
+      </h3>
+      <div className="flex flex-wrap gap-2">
+        {boatType && (
+          <span className="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded bg-primary/15 text-primary border border-primary/40">
+            {typeEmoji} {typeLabel}
+          </span>
+        )}
+        {leadStatus && (
+          <span
+            className={`text-[10px] uppercase tracking-wider px-2 py-0.5 rounded border ${
+              leadStatus.toUpperCase() === "NEW"
+                ? "bg-teal-500/15 text-teal-300 border-teal-500/40"
+                : "bg-gray-500/15 text-gray-300 border-gray-500/40"
+            }`}
+          >
+            {leadStatus.toUpperCase()}
+          </span>
+        )}
+      </div>
+      {boatModel && (
+        <div>
+          <p className="text-lg font-medium leading-snug break-words">{displayedModel}</p>
+          {showLong && (
+            <button
+              onClick={() => setExpanded((v) => !v)}
+              className="text-[11px] text-primary hover:underline mt-1"
+            >
+              {expanded ? "Show less" : "Show more"}
+            </button>
+          )}
+        </div>
+      )}
+      {joinDate && (
+        <p className="text-[11px] text-muted-foreground">
+          Joined community: {formatDate(joinDate)}
+        </p>
+      )}
+    </div>
+  );
+}
