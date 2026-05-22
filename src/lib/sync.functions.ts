@@ -7,7 +7,7 @@ const DEFAULT_SHOP_DOMAIN = "easysea-design-lab.myshopify.com";
 const SHOPIFY_API_VERSION = "2025-07";
 const SHOPIFY_PAGE_LIMIT = 250;
 
-type IntegrationId = "shopify" | "klaviyo" | "facebook" | "circle";
+type IntegrationId = "shopify" | "klaviyo" | "facebook" | "circle" | "zendesk";
 
 async function loadCredentials(id: IntegrationId): Promise<Record<string, string>> {
   const { data } = await (supabaseAdmin as any)
@@ -574,4 +574,98 @@ export const syncCircle = createServerFn({ method: "POST" })
       throw new Error(msg);
     }
   });
+
+export const syncZendesk = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async () => {
+    try {
+      const stored = await loadCredentials("zendesk");
+      const subdomain = stored.subdomain || process.env.ZENDESK_SUBDOMAIN;
+      const email = stored.email || process.env.ZENDESK_EMAIL;
+      const token = stored.api_token || process.env.ZENDESK_API_TOKEN;
+      if (!subdomain || !email || !token) {
+        const msg = "Credenziali Zendesk non configurate. Servono subdomain, email e api_token.";
+        await markStatus("zendesk", "Zendesk", false, 0, msg);
+        return { ok: false, message: msg };
+      }
+
+      const auth = btoa(`${email}/token:${token}`);
+      const headers = {
+        Authorization: `Basic ${auth}`,
+        "Content-Type": "application/json",
+      };
+      const baseUrl = `https://${subdomain}.zendesk.com/api/v2`;
+
+      // 1. Fetch all tickets (cursor pagination across all pages)
+      const allTickets: any[] = [];
+      let url: string | null = `${baseUrl}/tickets.json?per_page=100&sort_by=created_at&sort_order=desc`;
+      while (url) {
+        const res: Response = await fetch(url, { headers });
+        if (!res.ok) throw new Error(`Zendesk ${res.status}: ${await res.text()}`);
+        const json: any = await res.json();
+        allTickets.push(...(json.tickets ?? []));
+        url = json.next_page ?? null;
+      }
+
+      // 2. Resolve requester emails in bulk (100 ids per call)
+      const requesterIds = [...new Set(allTickets.map((t) => t.requester_id).filter(Boolean))] as number[];
+      const userEmailMap = new Map<number, string>();
+      for (let i = 0; i < requesterIds.length; i += 100) {
+        const batch = requesterIds.slice(i, i + 100);
+        const res = await fetch(`${baseUrl}/users/show_many.json?ids=${batch.join(",")}`, { headers });
+        if (!res.ok) continue;
+        const json: any = await res.json();
+        for (const u of json.users ?? []) {
+          if (u.email) userEmailMap.set(u.id, u.email);
+        }
+      }
+
+      // 3. Match to existing customers by email
+      const emails = [...new Set([...userEmailMap.values()])];
+      const { data: customers } = emails.length
+        ? await supabaseAdmin.from("customers").select("id, email").in("email", emails)
+        : { data: [] as { id: string; email: string }[] };
+      const customerByEmail = new Map((customers ?? []).map((c) => [c.email, c.id]));
+
+      // 4. Build upsert rows
+      const rows = allTickets.map((t) => {
+        const reqEmail = userEmailMap.get(t.requester_id);
+        const customerId = reqEmail ? customerByEmail.get(reqEmail) : null;
+        const isSolved = t.status === "solved" || t.status === "closed";
+        return {
+          zendesk_ticket_id: t.id,
+          customer_id: customerId ?? null,
+          subject: t.subject ?? null,
+          description: t.description ?? null,
+          status: t.status ?? null,
+          priority: t.priority ?? null,
+          tags: Array.isArray(t.tags) ? t.tags : [],
+          created_at: t.created_at ?? null,
+          solved_at: isSolved ? (t.updated_at ?? null) : null,
+          updated_at: t.updated_at ?? null,
+          requester_email: reqEmail ?? null,
+          satisfaction_rating: t.satisfaction_rating?.score ?? null,
+        };
+      });
+
+      for (let i = 0; i < rows.length; i += 500) {
+        const { error } = await (supabaseAdmin.from("zendesk_tickets") as any).upsert(
+          rows.slice(i, i + 500),
+          { onConflict: "zendesk_ticket_id" },
+        );
+        if (error) throw new Error(`Upsert failed: ${error.message}`);
+      }
+
+      const matched = rows.filter((r) => r.customer_id).length;
+      const solved = rows.filter((r) => r.status === "solved" || r.status === "closed").length;
+      const msg = `${allTickets.length} tickets · ${matched} matched · ${solved} solved`;
+      await markStatus("zendesk", "Zendesk", true, allTickets.length, msg);
+      return { ok: true, message: msg, total: allTickets.length, matched, solved };
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Unknown error";
+      await markStatus("zendesk", "Zendesk", false, 0, msg.slice(0, 200));
+      throw new Error(msg);
+    }
+  });
+
 
