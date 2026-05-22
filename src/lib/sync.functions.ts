@@ -3,6 +3,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { createClient } from "@supabase/supabase-js";
+
 const DEFAULT_SHOP_DOMAIN = "easysea-design-lab.myshopify.com";
 const SHOPIFY_API_VERSION = "2025-07";
 const SHOPIFY_PAGE_LIMIT = 250;
