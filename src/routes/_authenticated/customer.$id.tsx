@@ -26,6 +26,29 @@ function CustomerProfile() {
   const sent = data.emails.length;
   const openRate = sent ? Math.round((opens / sent) * 100) : 0;
 
+  const lastOrderAt = c.last_order_at ? new Date(c.last_order_at) : null;
+  const daysSince = lastOrderAt
+    ? Math.max(0, Math.floor((Date.now() - lastOrderAt.getTime()) / 86_400_000))
+    : 999;
+  const aiCustomer = {
+    id: c.id,
+    name: c.name,
+    email: c.email,
+    country: c.country,
+    boat_type: c.boat_type,
+    lifetime_value: Number(c.lifetime_value ?? 0),
+    last_purchase_days_ago: daysSince,
+    email_open_rate: sent ? opens / sent : 0,
+    circle_activity_score: data.circle?.engagement_score ?? 0,
+    orders: (data.orders ?? []).slice(0, 20).map((o: any) => ({
+      product: (Array.isArray(o.line_items) ? o.line_items : [])
+        .map((it: any) => it.name)
+        .join(" + ") || "order",
+      price: Number(o.total ?? 0),
+      date: typeof o.created_at === "string" ? o.created_at.slice(0, 10) : "",
+    })),
+  };
+
   return (
     <div className="p-8 space-y-6 max-w-7xl mx-auto">
       <Link to="/map" className="inline-flex items-center text-xs text-muted-foreground hover:text-primary">
@@ -127,6 +150,8 @@ function CustomerProfile() {
               </div>
             ))}
           </div>
+
+          <ClaudeCustomerInsights customer={aiCustomer} />
         </div>
       </div>
     </div>
