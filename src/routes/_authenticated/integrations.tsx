@@ -52,8 +52,8 @@ function Integrations() {
                 )}
               </div>
               <div className="flex items-center justify-between text-xs text-muted-foreground">
-                <span>{i.connected ? `${i.records_synced?.toLocaleString() ?? 0} records · ${i.status_message ?? "synced"}` : "Not connected"}</span>
-                {i.last_sync_at && <span className="font-mono">{new Date(i.last_sync_at).toLocaleDateString()}</span>}
+                <span>{i.connected ? `${formatNumber(i.records_synced ?? 0)} records · ${i.status_message ?? "synced"}` : "Not connected"}</span>
+                {i.last_sync_at && <span className="font-mono">{formatDate(i.last_sync_at)}</span>}
               </div>
               <Button
                 variant={i.connected ? "outline" : "default"}
