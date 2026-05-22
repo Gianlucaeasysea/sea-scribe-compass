@@ -4,6 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { getMapCustomers } from "@/lib/queries.functions";
 import { useMemo, useState } from "react";
 import { Input } from "@/components/ui/input";
+import { formatDate } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/fleet")({
   component: Fleet,
