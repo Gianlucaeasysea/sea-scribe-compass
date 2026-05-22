@@ -117,13 +117,13 @@ export function ClaudeCustomerInsights({ customer }: { customer: CustomerInput }
 
           <div className="flex flex-wrap gap-2 text-[11px]">
             <span className={`px-2 py-1 rounded border ${RISK_COLOR[data.churn_risk]}`}>
-              Churn: {data.churn_risk}
+              Churn: {data.churn_risk === "low" ? "basso" : data.churn_risk === "medium" ? "medio" : "alto"}
             </span>
             <span className="px-2 py-1 rounded border border-primary/30 bg-primary/10 text-primary">
-              {data.action_priority.replace("_", " ")}
+              {data.action_priority === "immediate" ? "immediato" : data.action_priority === "this_week" ? "questa settimana" : "questo mese"}
             </span>
             <span className="px-2 py-1 rounded border border-border bg-surface-2/40">
-              via {data.best_channel}
+              tramite {data.best_channel}
             </span>
           </div>
 
@@ -132,7 +132,7 @@ export function ClaudeCustomerInsights({ customer }: { customer: CustomerInput }
           )}
 
           <div className="space-y-2">
-            <p className="text-xs uppercase tracking-wider text-muted-foreground">Next-best moves</p>
+            <p className="text-xs uppercase tracking-wider text-muted-foreground">Prossime mosse</p>
             {data.recommendations.map((r, i) => (
               <div key={i} className="p-3 rounded-md bg-surface-2/40 border border-border space-y-1.5">
                 <div className="flex items-center gap-2">
