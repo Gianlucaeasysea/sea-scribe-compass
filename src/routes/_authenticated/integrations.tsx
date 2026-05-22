@@ -103,7 +103,22 @@ function Integrations() {
   const mutation = useMutation({
     mutationFn: async (id: IntegrationId) => {
       const fn = syncFns[id];
-      return { id, result: await fn({}) };
+      if (id !== "shopify") return { id, result: await fn({}) };
+
+      let result: any = await fn({ data: {} });
+      while (result?.ok && !result.done) {
+        qc.invalidateQueries({ queryKey: ["integrations"] });
+        result = await fn({
+          data: {
+            nextCustomersPath: result.nextCustomersPath,
+            nextOrdersPath: result.nextOrdersPath,
+            productCount: result.productCount,
+            customersSynced: result.customersSynced,
+            ordersSynced: result.ordersSynced,
+          },
+        });
+      }
+      return { id, result };
     },
     onSuccess: ({ id, result }) => {
       toast.success(`${id}: ${result.message}`);
