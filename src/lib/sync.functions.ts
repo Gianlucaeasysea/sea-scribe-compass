@@ -6,7 +6,6 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 const DEFAULT_SHOP_DOMAIN = "easysea-design-lab.myshopify.com";
 const SHOPIFY_API_VERSION = "2025-07";
 const SHOPIFY_PAGE_LIMIT = 250;
-const SHOPIFY_MAX_PAGES = 20;
 
 type IntegrationId = "shopify" | "klaviyo" | "facebook" | "circle";
 
@@ -142,18 +141,16 @@ function getNextShopifyPath(linkHeader: string | null) {
   return `${url.pathname.split(`/admin/api/${SHOPIFY_API_VERSION}/`)[1]}${url.search}`;
 }
 
-async function fetchAllShopifyRecords<T>(initialPath: string, key: string, stored?: Record<string, string>): Promise<{ records: T[]; blockedStatus: number | null; capped: boolean }> {
+async function fetchAllShopifyRecords<T>(initialPath: string, key: string, stored?: Record<string, string>): Promise<{ records: T[]; blockedStatus: number | null }> {
   const records: T[] = [];
   let nextPath: string | null = initialPath;
-  let pages = 0;
-  while (nextPath && pages < SHOPIFY_MAX_PAGES) {
+  while (nextPath) {
     const result = await shopifyFetch(nextPath, stored);
-    if (result.json === null) return { records, blockedStatus: result.status, capped: false };
+    if (result.json === null) return { records, blockedStatus: result.status };
     records.push(...((result.json[key] ?? []) as T[]));
     nextPath = getNextShopifyPath(result.link);
-    pages += 1;
   }
-  return { records, blockedStatus: null, capped: Boolean(nextPath) };
+  return { records, blockedStatus: null };
 }
 
 async function upsertInBatches(table: "customers" | "orders", rows: any[], onConflict: string, size = 500) {
@@ -268,7 +265,7 @@ export const syncShopify = createServerFn({ method: "POST" })
       const warnings: string[] = [];
       if (customersBlocked) warnings.push("clienti bloccati (manca scope read_customers)");
       if (ordersBlocked) warnings.push("ordini bloccati (manca scope read_orders)");
-      if (customersResult.capped || ordersResult.capped) warnings.push("sync parziale anti-timeout, rilancia per continuare");
+      
       const permissionHint = customersBlocked || ordersBlocked
         ? ". Abilita 'Protected customer data' nell'app Shopify per importarli."
         : "";
@@ -302,8 +299,7 @@ export const syncKlaviyo = createServerFn({ method: "POST" })
       const allIncluded: any[] = [];
       let nextUrl: string | null =
         "https://a.klaviyo.com/api/events/?page[size]=100&sort=-datetime&include=metric,profile";
-      let page = 0;
-      while (nextUrl && page < 10) {
+      while (nextUrl) {
         const res: Response = await fetch(nextUrl, {
           headers: {
             Authorization: `Klaviyo-API-Key ${key}`,
@@ -316,7 +312,6 @@ export const syncKlaviyo = createServerFn({ method: "POST" })
         allEvents.push(...(json.data ?? []));
         allIncluded.push(...(json.included ?? []));
         nextUrl = json.links?.next ?? null;
-        page++;
       }
 
       const metricById = new Map(
@@ -442,7 +437,7 @@ export const syncCircle = createServerFn({ method: "POST" })
       const allMembers: any[] = [];
       let page = 1;
       let hasMore = true;
-      while (hasMore && page <= 20) {
+      while (hasMore) {
         const res: Response = await fetch(
           `https://app.circle.so/api/v1/community_members?community_id=${community}&per_page=100&page=${page}`,
           { headers: { Authorization: `Token ${token}` } },
