@@ -63,7 +63,7 @@ function FleetMap() {
     <div className="p-8 space-y-6 max-w-[1400px] mx-auto">
       <div>
         <p className="font-mono text-xs text-primary tracking-widest">MAPPA CLIENTI</p>
-        <h1 className="text-3xl font-semibold mt-1">{total.toLocaleString()} clienti in vista</h1>
+        <h1 className="text-3xl font-semibold mt-1">{formatNumber(total)} clienti in vista</h1>
         <p className="text-muted-foreground text-sm mt-1">
           Distribuzione geografica dei diportisti — segmenti, posizionamento RFM e concentrazione di valore in un'unica schermata.
         </p>
