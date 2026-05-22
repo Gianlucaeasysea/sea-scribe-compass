@@ -20,6 +20,7 @@ const NAV = [
   { to: "/harbor",       label: "Segmenti",    icon: Anchor,          key: "H" },
   { to: "/queue",        label: "Azioni",      icon: Zap,             key: "Q" },
   { to: "/analytics",    label: "Analisi",     icon: BarChart2,       key: "A" },
+  { to: "/chat",         label: "Chat AI",     icon: Brain,           key: "C" },
   { to: "/integrations", label: "Connettori",  icon: Plug,            key: "I" },
 ];
 
