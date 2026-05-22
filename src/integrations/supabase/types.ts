@@ -82,6 +82,24 @@ export type Database = {
           },
         ]
       }
+      credentials_config: {
+        Row: {
+          credentials: Json
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          credentials?: Json
+          id: string
+          updated_at?: string
+        }
+        Update: {
+          credentials?: Json
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       customers: {
         Row: {
           avatar_seed: string | null
