@@ -122,11 +122,22 @@ export const getMapCustomers = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { supabase } = context;
-    const { data: customers } = await supabase
-      .from("customers")
-      .select("id, name, email, country, city, lat, lng, lifetime_value, boat_type, tags, last_order_at, total_orders, avatar_seed, circle_id, shopify_id, klaviyo_id");
-    const { data: rfm } = await supabase.from("rfm_scores").select("customer_id, tier, recency_score, frequency_score, monetary_score, churn_risk");
-    const { data: orders } = await supabase.from("orders").select("customer_id, line_items");
+    // Paginate to bypass Supabase's 1000-row default limit
+    const PAGE = 1000;
+    const customers: any[] = [];
+    for (let from = 0; ; from += PAGE) {
+      const { data, error } = await supabase
+        .from("customers")
+        .select("id, name, email, country, city, lat, lng, lifetime_value, boat_type, tags, last_order_at, total_orders, avatar_seed, circle_id, shopify_id, klaviyo_id")
+        .order("id", { ascending: true })
+        .range(from, from + PAGE - 1);
+      if (error) throw error;
+      if (!data || data.length === 0) break;
+      customers.push(...data);
+      if (data.length < PAGE) break;
+    }
+    const { data: rfm } = await supabase.from("rfm_scores").select("customer_id, tier, recency_score, frequency_score, monetary_score, churn_risk").range(0, 49999);
+    const { data: orders } = await supabase.from("orders").select("customer_id, line_items").range(0, 49999);
 
     const rfmMap = new Map((rfm ?? []).map((r) => [r.customer_id, r]));
     const productsByCustomer = new Map<string, Set<string>>();
