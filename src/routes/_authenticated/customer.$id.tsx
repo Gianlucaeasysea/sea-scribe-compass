@@ -82,6 +82,11 @@ function CustomerProfile() {
                 <MessageCircle className="size-3" /> Circle community
               </span>
             )}
+            {supportRisk && (
+              <span title={`${ticketsOpen} open ticket(s)${badSat ? " · bad satisfaction" : ""}`} className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wider px-2 py-0.5 rounded bg-red-500/15 text-red-300 border border-red-500/40">
+                <AlertTriangle className="size-3" /> Support risk
+              </span>
+            )}
           </h1>
           <p className="text-sm text-muted-foreground flex items-center gap-2"><Mail className="size-3" /> {c.email}</p>
           <p className="text-sm text-muted-foreground flex items-center gap-2"><MapPin className="size-3" /> {c.city}, {c.country}</p>
