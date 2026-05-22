@@ -135,7 +135,14 @@ function Fleet() {
               <tr key={c.id} className="border-t border-border hover:bg-surface-2/40 transition align-top">
                 <td className="p-3">
                   <Link to="/customer/$id" params={{ id: c.id }} className="hover:text-primary">
-                    <p className="font-medium">{c.name}</p>
+                    <p className="font-medium flex items-center gap-1.5">
+                      {c.name}
+                      {inCommunity(c) && (
+                        <span title="In Circle community" className="inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded bg-purple-500/15 text-purple-300 border border-purple-500/40">
+                          <MessageCircle className="size-2.5" /> Circle
+                        </span>
+                      )}
+                    </p>
                     <p className="text-xs text-muted-foreground">{c.email}</p>
                     {(c.city || c.country) && (
                       <p className="text-[11px] text-muted-foreground">{[c.city, c.country].filter(Boolean).join(", ")}</p>
