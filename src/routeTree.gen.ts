@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ApiMcpRouteImport } from './routes/api/mcp'
 import { Route as AuthenticatedQueueRouteImport } from './routes/_authenticated/queue'
 import { Route as AuthenticatedMapRouteImport } from './routes/_authenticated/map'
 import { Route as AuthenticatedIntegrationsRouteImport } from './routes/_authenticated/integrations'
@@ -35,6 +36,11 @@ const AuthenticatedRoute = AuthenticatedRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiMcpRoute = ApiMcpRouteImport.update({
+  id: '/api/mcp',
+  path: '/api/mcp',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedQueueRoute = AuthenticatedQueueRouteImport.update({
@@ -100,6 +106,7 @@ export interface FileRoutesByFullPath {
   '/integrations': typeof AuthenticatedIntegrationsRoute
   '/map': typeof AuthenticatedMapRoute
   '/queue': typeof AuthenticatedQueueRoute
+  '/api/mcp': typeof ApiMcpRoute
   '/customer/$id': typeof AuthenticatedCustomerIdRoute
   '/api/public/client-error': typeof ApiPublicClientErrorRoute
 }
@@ -114,6 +121,7 @@ export interface FileRoutesByTo {
   '/integrations': typeof AuthenticatedIntegrationsRoute
   '/map': typeof AuthenticatedMapRoute
   '/queue': typeof AuthenticatedQueueRoute
+  '/api/mcp': typeof ApiMcpRoute
   '/customer/$id': typeof AuthenticatedCustomerIdRoute
   '/api/public/client-error': typeof ApiPublicClientErrorRoute
 }
@@ -130,6 +138,7 @@ export interface FileRoutesById {
   '/_authenticated/integrations': typeof AuthenticatedIntegrationsRoute
   '/_authenticated/map': typeof AuthenticatedMapRoute
   '/_authenticated/queue': typeof AuthenticatedQueueRoute
+  '/api/mcp': typeof ApiMcpRoute
   '/_authenticated/customer/$id': typeof AuthenticatedCustomerIdRoute
   '/api/public/client-error': typeof ApiPublicClientErrorRoute
 }
@@ -146,6 +155,7 @@ export interface FileRouteTypes {
     | '/integrations'
     | '/map'
     | '/queue'
+    | '/api/mcp'
     | '/customer/$id'
     | '/api/public/client-error'
   fileRoutesByTo: FileRoutesByTo
@@ -160,6 +170,7 @@ export interface FileRouteTypes {
     | '/integrations'
     | '/map'
     | '/queue'
+    | '/api/mcp'
     | '/customer/$id'
     | '/api/public/client-error'
   id:
@@ -175,6 +186,7 @@ export interface FileRouteTypes {
     | '/_authenticated/integrations'
     | '/_authenticated/map'
     | '/_authenticated/queue'
+    | '/api/mcp'
     | '/_authenticated/customer/$id'
     | '/api/public/client-error'
   fileRoutesById: FileRoutesById
@@ -183,6 +195,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   LoginRoute: typeof LoginRoute
+  ApiMcpRoute: typeof ApiMcpRoute
   ApiPublicClientErrorRoute: typeof ApiPublicClientErrorRoute
 }
 
@@ -207,6 +220,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/mcp': {
+      id: '/api/mcp'
+      path: '/api/mcp'
+      fullPath: '/api/mcp'
+      preLoaderRoute: typeof ApiMcpRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/queue': {
@@ -314,18 +334,9 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   LoginRoute: LoginRoute,
+  ApiMcpRoute: ApiMcpRoute,
   ApiPublicClientErrorRoute: ApiPublicClientErrorRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
