@@ -21,14 +21,14 @@ export const listCustomersTool = defineTool({
     let q = supabaseAdmin
       .from("customers")
       .select(
-        "id, email, first_name, last_name, country, boat_type, lifetime_value, total_orders, circle_id, tags, last_order_at, community_join_date",
+        "id, email, country, boat_type, lifetime_value, total_orders, circle_id, tags, last_order_at, community_join_date",
       )
       .limit(limit);
     if (country) q = q.eq("country", country);
     if (boat_type) q = q.eq("boat_type", boat_type);
     if (typeof min_ltv === "number") q = q.gte("lifetime_value", min_ltv);
     if (circle_only) q = q.not("circle_id", "is", null);
-    if (search) q = q.or(`email.ilike.%${search}%,first_name.ilike.%${search}%,last_name.ilike.%${search}%`);
+    if (search) q = q.or(`email.ilike.%${search}%,name.ilike.%${search}%`);
     const { data, error } = await q;
     if (error) throw new Error(error.message);
     return { count: data?.length ?? 0, customers: data ?? [] };
