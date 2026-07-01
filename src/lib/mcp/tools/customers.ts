@@ -21,7 +21,7 @@ export const listCustomersTool = defineTool({
     let q = supabaseAdmin
       .from("customers")
       .select(
-        "id, email, country, boat_type, lifetime_value, total_orders, circle_id, tags, last_order_at, community_join_date",
+        "id, email, name, country, boat_type, boat_model, lifetime_value, total_orders, circle_id, tags, last_order_at, community_join_date",
       )
       .limit(limit);
     if (country) q = q.eq("country", country);
