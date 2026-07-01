@@ -2,6 +2,8 @@ import { defineTool } from "mcp-tanstack-start";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
+const j = (v: unknown) => JSON.stringify(v);
+
 export const listSegmentsTool = defineTool({
   name: "list_segments",
   description: "Elenca segmenti marketing con nome, descrizione, numero clienti, LTV medio.",
@@ -9,7 +11,7 @@ export const listSegmentsTool = defineTool({
   execute: async () => {
     const { data, error } = await supabaseAdmin.from("segments").select("*");
     if (error) throw new Error(error.message);
-    return { segments: data ?? [] };
+    return j({ segments: data ?? [] });
   },
 });
 
@@ -35,7 +37,7 @@ export const rfmDistributionTool = defineTool({
       tiers[r.tier].count++;
       tiers[r.tier].churn_sum += Number(r.churn_risk || 0);
     });
-    return {
+    return j({
       total: rows.length,
       tiers: Object.fromEntries(
         Object.entries(tiers).map(([k, v]) => [
@@ -43,7 +45,7 @@ export const rfmDistributionTool = defineTool({
           { count: v.count, avg_churn_risk: v.count ? +(v.churn_sum / v.count).toFixed(3) : 0 },
         ]),
       ),
-    };
+    });
   },
 });
 
@@ -58,6 +60,6 @@ export const marketingActionsTool = defineTool({
     if (status) q = q.eq("status", status);
     const { data, error } = await q;
     if (error) throw new Error(error.message);
-    return { actions: data ?? [] };
+    return j({ actions: data ?? [] });
   },
 });

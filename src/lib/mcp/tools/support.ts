@@ -2,6 +2,8 @@ import { defineTool } from "mcp-tanstack-start";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
+const j = (v: unknown) => JSON.stringify(v);
+
 export const zendeskTicketsTool = defineTool({
   name: "zendesk_tickets",
   description: "Ticket Zendesk con filtro status/priority e statistiche aggregate.",
@@ -31,13 +33,13 @@ export const zendeskTicketsTool = defineTool({
         satN++;
       }
     });
-    return {
+    return j({
       count: tickets.length,
       by_status: byStatus,
       by_priority: byPriority,
       avg_satisfaction: satN ? +(satSum / satN).toFixed(2) : null,
       tickets,
-    };
+    });
   },
 });
 
@@ -48,6 +50,6 @@ export const integrationsStatusTool = defineTool({
   execute: async () => {
     const { data, error } = await supabaseAdmin.from("integrations_status").select("*");
     if (error) throw new Error(error.message);
-    return { integrations: data ?? [] };
+    return j({ integrations: data ?? [] });
   },
 });

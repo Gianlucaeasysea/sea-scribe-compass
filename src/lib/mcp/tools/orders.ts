@@ -2,26 +2,23 @@ import { defineTool } from "mcp-tanstack-start";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
+const j = (v: unknown) => JSON.stringify(v);
+
 export const listOrdersTool = defineTool({
   name: "list_orders",
-  description:
-    "Elenca ordini recenti Easysea con totale, data, line_items e customer_id.",
+  description: "Elenca ordini recenti Easysea con totale, data, line_items e customer_id.",
   parameters: z.object({
     limit: z.number().int().min(1).max(500).default(50),
     customer_id: z.string().optional(),
-    since: z.string().optional().describe("ISO date, filtra created_at >= since"),
+    since: z.string().optional(),
   }),
   execute: async ({ limit, customer_id, since }) => {
-    let q = supabaseAdmin
-      .from("orders")
-      .select("*")
-      .order("created_at", { ascending: false })
-      .limit(limit);
+    let q = supabaseAdmin.from("orders").select("*").order("created_at", { ascending: false }).limit(limit);
     if (customer_id) q = q.eq("customer_id", customer_id);
     if (since) q = q.gte("created_at", since);
     const { data, error } = await q;
     if (error) throw new Error(error.message);
-    return { count: data?.length ?? 0, orders: data ?? [] };
+    return j({ count: data?.length ?? 0, orders: data ?? [] });
   },
 });
 
@@ -56,10 +53,10 @@ export const revenueSummaryTool = defineTool({
       .sort((a, b) => b[1].revenue - a[1].revenue)
       .slice(0, 15)
       .map(([name, v]) => ({ name, qty: v.qty, revenue_eur: Math.round(v.revenue) }));
-    return {
+    return j({
       orders_analyzed: orders.length,
       total_revenue_eur: Math.round(revenue),
       top_products: topProducts,
-    };
+    });
   },
 });

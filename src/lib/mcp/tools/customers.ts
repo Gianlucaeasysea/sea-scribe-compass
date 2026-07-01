@@ -2,6 +2,8 @@ import { defineTool } from "mcp-tanstack-start";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
+const j = (v: unknown) => JSON.stringify(v);
+
 export const listCustomersTool = defineTool({
   name: "list_customers",
   description:
@@ -12,10 +14,7 @@ export const listCustomersTool = defineTool({
     boat_type: z.string().optional(),
     min_ltv: z.number().optional(),
     circle_only: z.boolean().optional(),
-    search: z
-      .string()
-      .optional()
-      .describe("Cerca in email o nome (ilike)"),
+    search: z.string().optional(),
   }),
   execute: async ({ limit, country, boat_type, min_ltv, circle_only, search }) => {
     let q = supabaseAdmin
@@ -31,7 +30,7 @@ export const listCustomersTool = defineTool({
     if (search) q = q.or(`email.ilike.%${search}%,name.ilike.%${search}%`);
     const { data, error } = await q;
     if (error) throw new Error(error.message);
-    return { count: data?.length ?? 0, customers: data ?? [] };
+    return j({ count: data?.length ?? 0, customers: data ?? [] });
   },
 });
 
@@ -70,7 +69,7 @@ export const customerStatsTool = defineTool({
       byBoat[b] = (byBoat[b] ?? 0) + 1;
       if (r.circle_id) circle++;
     });
-    return {
+    return j({
       total: rows.length,
       paying: paying.length,
       total_revenue_eur: Math.round(totalRevenue),
@@ -78,6 +77,6 @@ export const customerStatsTool = defineTool({
       circle_members: circle,
       by_country: byCountry,
       by_boat_type: byBoat,
-    };
+    });
   },
 });

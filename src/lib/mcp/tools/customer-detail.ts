@@ -2,6 +2,8 @@ import { defineTool } from "mcp-tanstack-start";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
+const j = (v: unknown) => JSON.stringify(v);
+
 export const customerDetailTool = defineTool({
   name: "customer_detail",
   description:
@@ -21,7 +23,7 @@ export const customerDetailTool = defineTool({
     } else {
       throw new Error("Fornire customer_id oppure email");
     }
-    if (!cust) return { found: false };
+    if (!cust) return j({ found: false });
 
     const [orders, rfm, tickets, emails, recs] = await Promise.all([
       supabaseAdmin.from("orders").select("*").eq("customer_id", cust.id).order("created_at", { ascending: false }).limit(50),
@@ -31,7 +33,7 @@ export const customerDetailTool = defineTool({
       supabaseAdmin.from("recommendations").select("*").eq("customer_id", cust.id).limit(10),
     ]);
 
-    return {
+    return j({
       found: true,
       customer: cust,
       rfm: rfm.data ?? null,
@@ -39,6 +41,6 @@ export const customerDetailTool = defineTool({
       tickets: tickets.data ?? [],
       email_events: emails.data ?? [],
       recommendations: recs.data ?? [],
-    };
+    });
   },
 });
